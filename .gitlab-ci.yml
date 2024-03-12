@@ -17,19 +17,18 @@ build:docker:
     - echo $DOCKER_AUTH_WRITE_CONFIG > $HOME/.docker/config.json
     - echo ${CI_REGISTRY_PASSWORD} | docker login -u="${CI_REGISTRY_USER}" --password-stdin ${MTR_DEVOPS_REGISTRY}
   script:
-    - >
-      docker build
-        --progress=plain 
-        --pull 
-        --no-cache
-        --label quay.expires-after="$QUAY_TIME_TO_LIVE"
-        --file $DOCKERFILE
-        --tag "${CI_APPLICATION_REPOSITORY}:${CI_APPLICATION_TAG}"
-        --label "git-commit=$CI_COMMIT_SHORT_SHA"
-        --build-arg http_proxy=$http_proxy
-        --build-arg https_proxy=$https_proxy
-        --build-arg no_proxy=$no_proxy
-        --build-arg BASE_REGISTRY=$BASE_REGISTRY
-        --build-arg BASE_TAG=$BASE_TAG
-        .
+    - 'docker build
+      --progress=plain
+      --pull
+      --no-cache
+      --label quay.expires-after="$QUAY_TIME_TO_LIVE"
+      --file $DOCKERFILE
+      --tag "${CI_APPLICATION_REPOSITORY}:${CI_APPLICATION_TAG}"
+      --label "git-commit=$CI_COMMIT_SHORT_SHA"
+      --build-arg http_proxy=$http_proxy
+      --build-arg https_proxy=$https_proxy
+      --build-arg no_proxy=$no_proxy
+      --build-arg BASE_REGISTRY=$BASE_REGISTRY
+      --build-arg BASE_TAG=$BASE_TAG
+      .'
     - docker push "${CI_APPLICATION_REPOSITORY}" --all-tags
