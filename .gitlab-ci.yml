@@ -1,0 +1,35 @@
+stages:
+  - build
+
+variables:
+  DOCKERFILE: build/Dockerfile
+  MTR_DEVOPS_REGISTRY: "mtr.devops.telekom.de"
+  CI_REGISTRY: "${MTR_DEVOPS_REGISTRY}/tardis-internal/hyperion"
+  CI_REGISTRY_USER: "$MTR_DEVOPS_TARDIS_INTERNAL_PUSH_USER"
+  CI_REGISTRY_PASSWORD: "$MTR_DEVOPS_TARDIS_INTERNAL_PUSH_TOKEN"
+  CI_APPLICATION_REPOSITORY: ${CI_REGISTRY}/${CI_PROJECT_NAME}
+  CI_APPLICATION_TAG: ${CI_COMMIT_REF_SLUG}
+
+build:docker:
+  stage: build
+  before_script:
+    - mkdir -p $HOME/.docker
+    - echo $DOCKER_AUTH_WRITE_CONFIG > $HOME/.docker/config.json
+    - echo ${CI_REGISTRY_PASSWORD} | docker login -u="${CI_REGISTRY_USER}" --password-stdin ${MTR_DEVOPS_REGISTRY}
+  script:
+    - >
+      docker build
+        --progress=plain 
+        --pull 
+        --no-cache
+        --label quay.expires-after="$QUAY_TIME_TO_LIVE"
+        --file $DOCKERFILE
+        --tag "${CI_APPLICATION_REPOSITORY}:${CI_APPLICATION_TAG}"
+        --label "git-commit=$CI_COMMIT_SHORT_SHA"
+        --build-arg http_proxy=$http_proxy
+        --build-arg https_proxy=$https_proxy
+        --build-arg no_proxy=$no_proxy
+        --build-arg BASE_REGISTRY=$BASE_REGISTRY
+        --build-arg BASE_TAG=$BASE_TAG
+        .
+    - docker push "${CI_APPLICATION_REPOSITORY}" --all-tags

@@ -1,0 +1,16 @@
+oidc:
+  issuer: ${OIDC_ISSUER:http://localhost:8080/realms/dev}
+  clientId: my-client
+  clientSecret: my-secret
+  redirectUri: http://localhost:3000/callback
+  postLogoutRedirectUri: http://localhost:3000
+
+api:
+  url: http://localhost:3000
+rulesets:
+  - name: gapi
+    url: https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}@artifactory.devops.telekom.de/artifactory/published-api-linting-rules/spectral/v2/latest/gapi-linter-rules.spectral.yaml
+    refreshInterval: 300
+  - name: basic
+    url: https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}@artifactory.devops.telekom.de/artifactory/published-api-linting-rules/spectral/v2/latest/basis-linter-rules.spectral.yaml
+    refreshInterval: 300
