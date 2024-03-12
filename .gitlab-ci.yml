@@ -2,6 +2,7 @@ stages:
   - build
 
 variables:
+  DOCKER_VERSION: "20.10.23"
   DOCKERFILE: build/Dockerfile
   MTR_DEVOPS_REGISTRY: "mtr.devops.telekom.de"
   CI_REGISTRY: "${MTR_DEVOPS_REGISTRY}/tardis-internal/hyperion"
@@ -11,7 +12,12 @@ variables:
   CI_APPLICATION_TAG: ${CI_COMMIT_REF_SLUG}
 
 build:docker:
+  image: dockerhub.devops.telekom.de/docker:$DOCKER_VERSION
   stage: build
+  services:
+    - name: "dockerhub.devops.telekom.de/docker:$DOCKER_VERSION-dind"
+      command: ["--registry-mirror=https://dockerhub.devops.telekom.de"]
+      alias: docker
   before_script:
     - mkdir -p $HOME/.docker
     - echo $DOCKER_AUTH_WRITE_CONFIG > $HOME/.docker/config.json
