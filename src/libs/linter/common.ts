@@ -21,4 +21,7 @@ export interface LintResult {
     valid: boolean
     instance: "schema" | "spectral"
     violations: Array<Violations>
+    infos: number
+    warnings: number
+    errors: number
 }

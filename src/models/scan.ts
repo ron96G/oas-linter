@@ -23,9 +23,17 @@ const Violation = t.Object({
 export const Scan = t.Object({
 	id: ID,
 	tags: t.Array(t.String()),
+	spec: t.Optional(t.String()),
 	status: t.String({ enum: ['valid', 'pending', 'failed', 'invalid'] }),
 	created_at: t.String({ format: 'date-time', default: new Date().toISOString() }),
+	info: t.Object({
+		valid: t.Boolean(),
+		infos: t.Number(),
+		warnings: t.Number(),
+		errors: t.Number()
+	}),
 	violations: t.Array(Violation)
+
 }, { description: 'Scan result' })
 
 export const ScanRequest = t.Any();
@@ -51,11 +59,20 @@ export interface Violation {
 
 type ScanStatus = 'valid' | 'pending' | 'failed' | 'invalid';
 
+
+export interface ViolationsInfo {
+	valid: boolean;
+	infos: number;
+	warnings: number;
+	errors: number;
+}
 export interface Scan {
 	id: string;
+	spec?: string;
 	tags: string[];
 	status: ScanStatus;
 	created_at: string;
+	info: ViolationsInfo;
 	violations: Violation[];
 }
 

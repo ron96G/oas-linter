@@ -57,7 +57,7 @@ export function setup() {
                         type: 'oauth2',
                         flows: {
                             clientCredentials: {
-                                tokenUrl: `${config.get<string>('oidc.issuer')}/protocol/openid-connect/token`,
+                                tokenUrl: `${config.get('oidc.issuer')}/protocol/openid-connect/token`,
                                 scopes: {}
                             }
                         }
@@ -98,6 +98,7 @@ export function setup() {
         .group('/api/v1', (app) =>
 
             app.use(oidcAuth.auth())
+
                 .onBeforeHandle(({ headers, set }) => {
                     const contentType = headers['content-type']
                     if (contentType && !ALLOWED_CONTENT_TYPES.includes(contentType)) {
@@ -118,17 +119,18 @@ export function setup() {
                     return request.text()
                 })
 
-                .post('/scans', async ({ auth, body, query: { tags, ruleset } }) => {
+                .post('/scans', async ({ auth, body, query: { tags, ruleset, includeSpec } }) => {
                     const splitTags = tags?.split(",")
                     splitTags?.push(auth.profile.clientId)
 
-                    return scanCtl.scan(body as any, ruleset, splitTags)
+                    return scanCtl.scan(body as any, ruleset, splitTags, Boolean(includeSpec))
                 }, {
                     body: t.Any({ description: 'OpenAPI spec' }),
                     response: Scan,
                     query: t.Object({
                         tags: t.Optional(t.String()),
-                        ruleset: t.Optional(t.String())
+                        ruleset: t.Optional(t.String()),
+                        includeSpec: t.Optional(t.String({ enum: ['true', 'false'] }))
                     }),
                     detail: {
                         summary: 'Scan an OpenAPI spec',
@@ -137,10 +139,13 @@ export function setup() {
                     }
                 })
 
-                .get('/scans/:id', async ({ params: { id } }) => {
-                    return scanCtl.getScan(id)
+                .get('/scans/:id', async ({ params: { id }, query: { includeSpec } }) => {
+                    return scanCtl.getScan(id, Boolean(includeSpec))
                 }, {
                     params: t.Object({ id: ID }),
+                    query: t.Object({
+                        includeSpec: t.Optional(t.String({ enum: ['true', 'false'] }))
+                    }),
                     response: Scan,
                     detail: {
                         summary: 'Get a scan result',

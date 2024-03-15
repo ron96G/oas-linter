@@ -21,13 +21,28 @@ export function determineSeverity(severity: number, code: string | number): Viol
     return "information"
 }
 
-export function formatResult(inputs: Array<ISpectralDiagnostic>): LintResult {
-    const results: Array<LintResult> = []
+function decideValidity(res: LintResult) {
+    res.valid = res.errors == 0 && res.warnings == 0
+    return res;
+}
 
-    return {
-        valid: inputs === undefined || inputs.length === 0,
+export function formatResult(inputs: Array<ISpectralDiagnostic>): LintResult {
+
+    let infos = 0
+    let warnings = 0
+    let errors = 0
+
+    var res: LintResult = {
+        valid: false,
         instance: "spectral",
         violations: inputs.map(input => {
+            if (input.severity == 0) {
+                errors++
+            } else if (input.severity == 1) {
+                warnings++
+            } else {
+                infos++
+            }
             return {
                 message: input.message,
                 severity: determineSeverity(input.severity, input.code),
@@ -44,7 +59,11 @@ export function formatResult(inputs: Array<ISpectralDiagnostic>): LintResult {
                     }
                 }
             }
-        })
+        }),
+        infos: infos,
+        warnings: warnings,
+        errors: errors
     }
+    return decideValidity(res)
 }
 

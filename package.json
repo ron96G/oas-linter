@@ -16,6 +16,7 @@
     "@stoplight/spectral-ruleset-bundler": "^1.5.2",
     "@stoplight/spectral-rulesets": "^1.18.1",
     "ajv": "8.12.0",
+    "arctic": "^1.2.1",
     "elysia": "^0.8.17",
     "jose": "^5.2.3",
     "jsonpath": "^1.1.1",
