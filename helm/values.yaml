@@ -48,13 +48,13 @@ ingress:
     nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
     nginx.ingress.kubernetes.io/proxy-buffer-size: 64k
   hosts:
-    - host: linter-server--integration.test.dhei.telekom.de
+    - host: linter--integration.test.dhei.telekom.de
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls:
     - hosts:
-        - linter-server--integration.test.dhei.telekom.de
+        - linter--integration.test.dhei.telekom.de
 
 resources:
   limits:

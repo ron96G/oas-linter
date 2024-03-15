@@ -53,12 +53,12 @@ spec:
             - name: ARTIFACTORY_USER
               valueFrom:
                 secretKeyRef:
-                  name: linter-server
+                  name: linter
                   key: artifactoryUsername
             - name: ARTIFACTORY_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: linter-server
+                  name: linter
                   key: artifactoryPassword
       {{- with .Values.nodeSelector }}
       nodeSelector:
