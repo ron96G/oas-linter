@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 1.0.0
+description: A helm chart for the linter-api service
+name: linter-api
+type: application
+version: 1.0.0

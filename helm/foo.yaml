@@ -1,0 +1,112 @@
+---
+# Source: linter-api/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-linter-api
+  labels:
+    helm.sh/chart: linter-api-1.0.0
+    app.kubernetes.io/name: linter-api
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: linter-api
+    app.kubernetes.io/instance: release-name
+---
+# Source: linter-api/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-linter-api
+  labels:
+    helm.sh/chart: linter-api-1.0.0
+    app.kubernetes.io/name: linter-api
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: linter-api
+      app.kubernetes.io/instance: release-name
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: linter-api
+        app.kubernetes.io/instance: release-name
+    spec:
+      imagePullSecrets:
+        - name: eni-pull-mtr-devops-tardis-internal-secret
+      serviceAccountName: default
+      securityContext:
+        fsGroup: 2000
+      containers:
+        - name: linter-api
+          securityContext:
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          image: "mtr.devops.telekom.de/tardis-internal/hyperion/linter-api:main"
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /q/health
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /q/ready
+          #     port: http
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
+          env:
+            - name: ARTIFACTORY_USER
+              value: foo
+            - name: ARTIFACTORY_PASSWORD
+              value: bar
+            - name: OIDC_ISSUER
+              value: http://foo.bar
+---
+# Source: linter-api/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: release-name-linter-api
+  labels:
+    helm.sh/chart: linter-api-1.0.0
+    app.kubernetes.io/name: linter-api
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  rules:
+    - host: "linter-api--integration.test.dhei.telekom.de"
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: release-name-linter-api
+                port:
+                  number: 3000
