@@ -29,6 +29,8 @@
     "build": "bun build src/index.ts",
     "start": "NODE_ENV=production bun src/index.ts",
     "test": "bun test",
-    "docker:build": "docker build -t linter-api . -f build/Dockerfile"
+    "docker:build": "docker build -t linter-api . -f build/Dockerfile",
+    "helm:install": "helm install linter-server ./helm --namespace=default",
+    "helm:upgrade": "helm upgrade linter-server ./helm --namespace=default"
   }
 }
