@@ -72,25 +72,9 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
 
-env:
-  - name: OIDC_ISSUER
-    value: https://stargate-integration.test.dhei.telekom.de/auth/realms/team-default
-  - name: ARTIFACTORY_USER
-    valueFrom:
-      secretKeyRef:
-        name: linter-server
-        key: artifactoryUsername
-  - name: ARTIFACTORY_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: linter-server
-        key: artifactoryPassword
-
-secrets:
-  artifactoryUsername: <path:secret/data/hyperion/dev-test-rover_integration/linter-server#ARTIFACTORY_USER>
-  artifactoryPassword: <path:secret/data/hyperion/dev-test-rover_integration/linter-server#ARTIFACTORY_PASSWORD>
+oidcIssuer: https://stargate-integration.test.dhei.telekom.de/auth/realms/team-default
+artifactoryUsername: <path:secret/data/hyperion/dev-test-rover_integration/linter-server#ARTIFACTORY_USER>
+artifactoryPassword: <path:secret/data/hyperion/dev-test-rover_integration/linter-server#ARTIFACTORY_PASSWORD>

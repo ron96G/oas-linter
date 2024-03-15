@@ -47,10 +47,19 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.env }}
           env:
-          {{- toYaml . | nindent 12 }}
-          {{- end }}
+            - name: OIDC_ISSUER
+              value: {{ .Values.oidcIssuer }}
+            - name: ARTIFACTORY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: linter-server
+                  key: artifactoryUsername
+            - name: ARTIFACTORY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: linter-server
+                  key: artifactoryPassword
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
