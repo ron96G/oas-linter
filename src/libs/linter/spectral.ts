@@ -14,10 +14,15 @@ export interface RuleRef {
 export class Linter {
 
     private readonly rulesets = new Map<string, Ruleset | RulesetDefinition>();
+    private errors = new Map<string, string>();
 
     constructor() {
         this.setRuleset('oas', new Ruleset(Rulesets.oas));
         this.setRuleset('asyncapi', new Ruleset(Rulesets.asyncapi));
+    }
+
+    getErrors() {
+        return this.errors
     }
 
     getSupportedRulesets() {
@@ -56,9 +61,12 @@ export class Linter {
             })
 
             if (res.status !== 200) {
-                throw new Error(`Failed to fetch ${finalUri}: ${await res.text()}`)
+                console.log(await res.text())
+                this.errors.set(name, `Failed to fetch ruleset from ${finalUri}: ${res.status}`)
+                throw Error(`Failed to fetch ruleset from ${finalUri}: ${res.status}`)
+            } else {
+                return res.text()
             }
-            return res.text()
         }
 
         const io: IO = {
@@ -73,14 +81,19 @@ export class Linter {
         }
 
         const filename = url.split('/').pop()!
-        console.log(`Fetching ruleset ${filename}`)
-        this.setRuleset(name, await bundleAndLoadRuleset(filename, io))
 
-        if (refreshInterval) {
-            setInterval(async () => {
+        const refresh = async () => {
+            try {
                 console.log(`Refreshing ruleset ${filename}`)
                 this.setRuleset(name, await bundleAndLoadRuleset(filename, io))
-            }, refreshInterval * 1000)
+            } catch (e) {
+                console.error(`Failed to refresh ruleset ${filename}:`, e)
+            }
+        }
+        await refresh()
+
+        if (refreshInterval) {
+            setInterval(refresh, refreshInterval * 1000)
         }
     }
 

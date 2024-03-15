@@ -3,8 +3,10 @@ import { Elysia, t } from 'elysia'
 
 import config from '../config/config'
 import { ID } from '../models/common'
+import { ProbesResponse } from '../models/probes'
 import { Scan } from '../models/scan'
 import { OidcAuth } from './auth/oidc'
+import { ProbesControllerImpl, type Decider } from './probes'
 import { ScanControllerImpl } from './scan'
 
 const ALLOWED_CONTENT_TYPES = ['application/json', 'application/yaml']
@@ -75,11 +77,17 @@ export function setup() {
                 },
                 {
                     name: 'default',
-                    description: 'OpenAPI spec download'
+                    description: 'Some general operations'
                 }
             ]
         }
     }))
+
+
+    app.onError(({ code, error }) => {
+        console.error(`Error ${code}:`, error)
+        return { code, error: error.message }
+    })
 
     // scan routes
     const scanCtl = new ScanControllerImpl()
@@ -90,83 +98,78 @@ export function setup() {
         })
     }
 
-    app.onError(({ code, error }) => {
-        console.error(`Error ${code}:`, error)
-        return { code, error: error.message }
-    })
+    app.group('/api/v1', (app) =>
 
-        .group('/api/v1', (app) =>
+        app.use(oidcAuth.auth())
 
-            app.use(oidcAuth.auth())
-
-                .onBeforeHandle(({ headers, set }) => {
-                    const contentType = headers['content-type']
-                    if (contentType && !ALLOWED_CONTENT_TYPES.includes(contentType)) {
-                        set.status = 415
-                        return {
-                            code: "UNSUPPORTED_CONTENT_TYPE",
-                            error: `Unsupported content type: ${contentType}`
-                        }
+            .onBeforeHandle(({ headers, set }) => {
+                const contentType = headers['content-type']
+                if (contentType && !ALLOWED_CONTENT_TYPES.includes(contentType)) {
+                    set.status = 415
+                    return {
+                        code: "UNSUPPORTED_CONTENT_TYPE",
+                        error: `Unsupported content type: ${contentType}`
                     }
-                })
+                }
+            })
 
-                .onParse(async ({ request }, contentType) => {
-                    if (contentType === 'application/json') {
-                        return request.json()
-                    } else if (contentType === 'application/yaml') {
-                        return request.text()
-                    }
+            .onParse(async ({ request }, contentType) => {
+                if (contentType === 'application/json') {
+                    return request.json()
+                } else if (contentType === 'application/yaml') {
                     return request.text()
-                })
+                }
+                return request.text()
+            })
 
-                .post('/scans', async ({ auth, body, query: { tags, ruleset, includeSpec } }) => {
-                    const splitTags = tags?.split(",")
-                    splitTags?.push(auth.profile.clientId)
+            .post('/scans', async ({ auth, body, query: { tags, ruleset, includeSpec } }) => {
+                const splitTags = tags?.split(",")
+                splitTags?.push(auth.profile.clientId)
 
-                    return scanCtl.scan(body as any, ruleset, splitTags, Boolean(includeSpec))
-                }, {
-                    body: t.Any({ description: 'OpenAPI spec' }),
-                    response: Scan,
-                    query: t.Object({
-                        tags: t.Optional(t.String()),
-                        ruleset: t.Optional(t.String()),
-                        includeSpec: t.Optional(t.String({ enum: ['true', 'false'] }))
-                    }),
-                    detail: {
-                        summary: 'Scan an OpenAPI spec',
-                        description: 'Scan an OpenAPI spec and return the scan result',
-                        tags: ['scans']
-                    }
-                })
+                return scanCtl.scan(body as any, ruleset, splitTags, Boolean(includeSpec))
+            }, {
+                body: t.Any({ description: 'OpenAPI spec' }),
+                response: Scan,
+                query: t.Object({
+                    tags: t.Optional(t.String()),
+                    ruleset: t.Optional(t.String()),
+                    includeSpec: t.Optional(t.String({ enum: ['true', 'false'] }))
+                }),
+                detail: {
+                    summary: 'Scan an OpenAPI spec',
+                    description: 'Scan an OpenAPI spec and return the scan result',
+                    tags: ['scans']
+                }
+            })
 
-                .get('/scans/:id', async ({ params: { id }, query: { includeSpec } }) => {
-                    return scanCtl.getScan(id, Boolean(includeSpec))
-                }, {
-                    params: t.Object({ id: ID }),
-                    query: t.Object({
-                        includeSpec: t.Optional(t.String({ enum: ['true', 'false'] }))
-                    }),
-                    response: Scan,
-                    detail: {
-                        summary: 'Get a scan result',
-                        description: 'Get a scan result by its ID',
-                        tags: ['scans']
-                    }
-                })
+            .get('/scans/:id', async ({ params: { id }, query: { includeSpec } }) => {
+                return scanCtl.getScan(id, Boolean(includeSpec))
+            }, {
+                params: t.Object({ id: ID }),
+                query: t.Object({
+                    includeSpec: t.Optional(t.String({ enum: ['true', 'false'] }))
+                }),
+                response: Scan,
+                detail: {
+                    summary: 'Get a scan result',
+                    description: 'Get a scan result by its ID',
+                    tags: ['scans']
+                }
+            })
 
-                .get('/scans', ({ query: { tags, status } }) => scanCtl.getScans(status, tags?.split(",")), {
-                    response: t.Array(Scan),
-                    query: t.Object({
-                        tags: t.Optional(t.String()),
-                        status: t.Optional(t.String({ enum: ['done', 'failed'] }))
-                    }),
-                    detail: {
-                        summary: 'List scan results',
-                        description: 'List scan results with optional filtering by tags and status',
-                        tags: ['scans']
-                    }
-                })
-        )
+            .get('/scans', ({ query: { tags, status } }) => scanCtl.getScans(status, tags?.split(",")), {
+                response: t.Array(Scan),
+                query: t.Object({
+                    tags: t.Optional(t.String()),
+                    status: t.Optional(t.String({ enum: ['done', 'failed'] }))
+                }),
+                detail: {
+                    summary: 'List scan results',
+                    description: 'List scan results with optional filtering by tags and status',
+                    tags: ['scans']
+                }
+            })
+    )
 
     app.group('/api/v1/config', (app) =>
 
@@ -216,6 +219,45 @@ export function setup() {
                         tags: ['config']
                     }
                 })
+    )
+
+    // probe routes
+    const linterDecider: Decider = {
+        name: "linter",
+        decide: () => scanCtl.linter.getErrors().size === 0
+    }
+    const probesCtl = new ProbesControllerImpl()
+        .withReadyDecider(linterDecider)
+        .withLiveDecider(linterDecider)
+        .withStartupDecider(linterDecider)
+
+    app.group('/q', (app) =>
+        app.get('/health/ready', () => probesCtl.ready(), {
+            response: ProbesResponse,
+            detail: {
+                summary: 'Readiness probe',
+                description: 'Check if the service is ready to accept traffic',
+                tags: ['default']
+            }
+        })
+
+            .get('/health/live', () => probesCtl.live(), {
+                response: ProbesResponse,
+                detail: {
+                    summary: 'Liveness probe',
+                    description: 'Check if the service is alive',
+                    tags: ['default']
+                }
+            })
+
+            .get('/health/started', () => probesCtl.startup(), {
+                response: ProbesResponse,
+                detail: {
+                    summary: 'Liveness probe',
+                    description: 'Check if the service is alive',
+                    tags: ['default']
+                }
+            })
     )
 
 
