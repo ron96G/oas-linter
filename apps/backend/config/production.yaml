@@ -15,4 +15,4 @@ rulesets:
 ui:
   enabled: true
   url: ${EDITOR_URL:http://localhost:5173}
-  apiBase: /
+  apiBase: ""
