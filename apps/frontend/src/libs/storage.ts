@@ -88,7 +88,7 @@ abstract class AbstractStorage implements Storage {
 
 export class BackendStorage extends AbstractStorage {
 
-    static BACKEND_HOST = "http://localhost:3000"
+    static BACKEND_HOST = "" // Set to the backend host, e.g. http://localhost:3000
     static BASE_PATH = BackendStorage.BACKEND_HOST + "/api/v1/config"
     static RULESETS_INDEX_PATH = this.BASE_PATH + "/rulesets/"
     static JSON_SCHEMAS_INDEX_PATH = this.BASE_PATH + "/schemas/"
