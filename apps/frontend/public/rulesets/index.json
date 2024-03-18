@@ -1,0 +1,8 @@
+{
+    "rules": [
+        {
+            "name": "default",
+            "href": "rulesets/default.json"
+        }
+    ]
+}

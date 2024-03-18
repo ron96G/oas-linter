@@ -3,7 +3,7 @@ stages:
 
 variables:
   DOCKER_VERSION: "20.10.23"
-  DOCKERFILE: build/Dockerfile
+  DOCKERFILE: build/Dockerfile.all-in-one
   MTR_DEVOPS_REGISTRY: "mtr.devops.telekom.de"
   CI_REGISTRY: "${MTR_DEVOPS_REGISTRY}/tardis-internal/hyperion"
   CI_REGISTRY_USER: "$MTR_DEVOPS_TARDIS_INTERNAL_PUSH_USER"

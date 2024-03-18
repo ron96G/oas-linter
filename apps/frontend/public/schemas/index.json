@@ -1,0 +1,16 @@
+{
+    "schemas": [
+        {
+            "name": "openapi:2.0",
+            "href": "schemas/openapi/2.0/schema.json"
+        },
+        {
+            "name": "openapi:3.0",
+            "href": "schemas/openapi/3.0/schema.json"
+        },
+        {
+            "name": "openapi:3.1",
+            "href": "schemas/openapi/3.1/schema.json"
+        }
+    ]
+}

@@ -1,0 +1,255 @@
+<script setup lang="ts">
+import IntoTable, { InfoItem } from '@/components/IntoTable.vue';
+import TextEditor from '@/components/editor/NextTextEditor.vue';
+import { convertInput, formatInput } from '@/libs/format';
+import { SchemaItem, loadAllSchemas } from "@/libs/json-schema";
+import { Linter, determineInputType } from "@/libs/linter";
+import * as log from '@/libs/log';
+import { createStorage } from "@/libs/storage";
+import { onMounted, ref, watch, type Ref } from "vue";
+import { DragCol } from 'vue-resizer';
+
+
+const props = defineProps({
+    theme: {
+        type: String,
+        default: 'dark'
+    }
+})
+
+// Variables
+
+const _storage = createStorage()
+const _linter = new Linter()
+// See beforeunload hook, tracks if there is potential data loss for user
+let changed = false;
+
+const editorTheme = ref('dark')
+const supportedRulesets: Ref<Array<string>> = ref([])
+const supportedSchemaVersions: Ref<Array<string>> = ref([])
+const focusLine: Ref<Number | Object> = ref(0)
+const annotations: Ref<Array<InfoItem>> = ref([])
+const input = ref("")
+const valueTracker = ref("")
+const inputType = ref("yaml")
+const showImportPopup = ref(false)
+const selectedRuleset = ref("")
+const selectedSchemaVersion = ref("")
+const jsonSchemas: Ref<Array<SchemaItem>> = ref([])
+
+function getFromQuery(key: string, defValue: string, set: boolean = true) {
+    const url = new URL(window.location.href);
+    const value = url.searchParams.get(key)
+    if (!value && set) {
+        url.searchParams.set(key, defValue)
+        window.history.pushState({}, '', url)
+    }
+    return value ?? defValue
+}
+// Observers
+
+watch(() => props.theme, (val: string) => {
+    editorTheme.value = val
+})
+
+// Hooks
+// prevent data loss by prompting user to confirm on exit
+window.addEventListener('beforeunload', (event) => {
+    if (changed) {
+        event.preventDefault();
+        return event.returnValue = '';
+    }
+});
+
+onMounted(async () => {
+    log.info('OpenAPIValidator mounted')
+    _storage.then(async (store) => {
+        await _linter.setup(store)
+        supportedRulesets.value = _linter.supportedRulesets
+        jsonSchemas.value = await loadAllSchemas(store)
+        supportedSchemaVersions.value = jsonSchemas.value.map(s => s.fileMatch?.[0])
+
+        const ruleset = getFromQuery("ruleset", "oas", true)
+        if (ruleset) {
+            selectedRuleset.value = ruleset
+        }
+        const schema = getFromQuery("schema", "openapi.v3.0", true)
+        if (schema) {
+            selectedSchemaVersion.value = schema
+        }
+
+        const inputUrl = getFromQuery("input", "", false)
+        if (inputUrl) {
+            const response = await fetch(inputUrl)
+            if (response.ok) {
+                input.value = await response.text()
+            }
+        }
+    })
+})
+
+async function onInit(editor: any) {
+    valueTracker.value = editor.getValue()
+}
+
+async function onSchemaChange(newValue: string) {
+    if (newValue !== null && newValue !== selectedSchemaVersion.value) {
+        selectedSchemaVersion.value = newValue
+    }
+}
+
+async function onChange(value: string) {
+    changed = true;
+    valueTracker.value = value
+    inputType.value = determineInputType(value)
+    log.debug('Input type is ' + inputType.value)
+    try {
+        const result = await _linter.lintRaw(value, selectedRuleset.value)
+        annotations.value = result
+
+    } catch (e) {
+        // could not validate, whatever...
+        log.debug('Failed to lint ' + e)
+    }
+}
+
+async function onUpdatedSelectedRuleset(e: any) {
+    selectedRuleset.value = e.detail.value;
+    await onChange(valueTracker.value)
+}
+
+async function onUpdatedSelectedSchemaVersion(e: any) {
+    selectedSchemaVersion.value = e.detail.value;
+    await onChange(valueTracker.value)
+}
+
+async function onImport(obj: any) {
+    try {
+        await _linter.addRuleset(obj.name, obj.text)
+        supportedRulesets.value = _linter.supportedRulesets;
+        _storage.then(s => {
+            s.set(obj.name, {
+                name: obj.name,
+                value: obj.text
+            })
+            s.save()
+        })
+        selectedRuleset.value = obj.name
+        await onChange(valueTracker.value)
+
+    } catch (e) {
+        console.log(e)
+        alert(e)
+    }
+}
+
+// Actions
+
+function doJumpToLine(linePosition: number | { column: number, line: number }) {
+    focusLine.value = linePosition;
+}
+
+async function doResetAll() {
+    localStorage.clear()
+    input.value = ""
+    location.reload()
+}
+
+async function doFormatInput() {
+    try {
+        input.value = formatInput(valueTracker.value) ?? ""
+    } catch (e) {
+        console.log(e)
+    }
+}
+
+async function doConvertInput() {
+    try {
+        input.value = convertInput(valueTracker.value) ?? ""
+    } catch (e) {
+        console.log(e)
+    }
+}
+</script>
+
+
+<template>
+    <div id="openapi-validator-wrapper">
+        <div id="content">
+            <div id="controls-wrapper">
+                <div id="ruleset-wrapper" class="controls-item">
+                    <scale-dropdown-select label="Select Ruleset" :value="selectedRuleset"
+                        @scale-change="onUpdatedSelectedRuleset">
+                        <template v-for="ruleset in supportedRulesets">
+                            <scale-dropdown-select-item :value="ruleset">{{ ruleset
+                                }}</scale-dropdown-select-item>
+                        </template>
+                    </scale-dropdown-select>
+                </div>
+                <div id="schema-wrapper" class="controls-item">
+                    <scale-dropdown-select label="Select Schema Version" :value="selectedSchemaVersion"
+                        @scale-change="onUpdatedSelectedSchemaVersion">
+                        <template v-for="schemaVersion in supportedSchemaVersions">
+                            <scale-dropdown-select-item :value="schemaVersion">{{ schemaVersion
+                                }}</scale-dropdown-select-item>
+                        </template>
+                    </scale-dropdown-select>
+                </div>
+                <scale-button class="controls-item" @click="showImportPopup = true"> Import<br>Ruleset </scale-button>
+                <scale-button class="controls-item" @click="doJumpToLine(1)"> Jump<br>
+                    To Top</scale-button>
+                <scale-button class="controls-item" @click="doFormatInput"> Format</scale-button>
+                <scale-button class="controls-item" @click="doConvertInput"> Convert<br>(json/yaml)</scale-button>
+                <scale-button class="controls-item" @click="doResetAll"> Reset</scale-button>
+            </div>
+            <DragCol width="100vw" height="96vh" sliderHoverColor="#ffffff" sliderBgHoverColor="#e20074"
+                sliderColor="#000000" sliderBgColor="#ffffff" sliderWidth="15" leftPercent="40">
+                <template #left>
+                    <TextEditor id="input-editor" :value="input" :lang="inputType" @update:value="onChange"
+                        @update:schema="onSchemaChange" @init="onInit" :annotations="annotations" :focusLine="focusLine"
+                        :theme="editorTheme" :schemas="jsonSchemas" :modelFileUri="selectedSchemaVersion">
+                    </TextEditor>
+                </template>
+                <template #right>
+                    <IntoTable :infos="annotations" @jump-to-line="doJumpToLine"></IntoTable>
+                </template>
+            </DragCol>
+        </div>
+    </div>
+</template>
+
+<style scoped>
+#controls-wrapper {
+    display: flex;
+    padding-bottom: 5px;
+    padding-top: 5px;
+    margin-bottom: 5px;
+}
+
+.controls-item {
+    margin-right: 5px;
+}
+
+#openapi-validator-wrapper {
+    position: relative;
+}
+
+#content {
+    display: block;
+    margin: auto;
+}
+
+#ruleset-wrapper {
+    min-width: 250px;
+    max-width: 300px;
+}
+
+#schema-wrapper {
+    min-width: 200px;
+    max-width: 300px;
+}
+
+#input-editor {
+    height: 96vh;
+}
+</style>
