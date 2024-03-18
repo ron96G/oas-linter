@@ -20,6 +20,7 @@ export function setup() {
 
     const apiUrl = config.get<string>('api.url')!
     let editorUrl: string | undefined;
+    let editorApiBase = config.get<string>('ui.apiBase') ?? "/"
     if (config.get<boolean>('ui.enabled')) {
         editorUrl = config.get<string>('ui.url')
     } else {
@@ -196,7 +197,7 @@ export function setup() {
                 const scan = scanCtl.scan(body as any, ruleset, splitTags, Boolean(includeSpec))
                 if (editorUrl !== undefined) {
                     const _scan = await scan
-                    _scan.editor_href = `${editorUrl}?input=${apiUrl}/api/v1/scans/${_scan.id}/spec&ruleset=${ruleset}&schema=openapi.v3.0`
+                    _scan.editor_href = `${editorUrl}?input=${editorApiBase}/api/v1/scans/${_scan.id}/spec&ruleset=${ruleset}&schema=openapi.v3.0`
                     return _scan
                 }
                 return scan

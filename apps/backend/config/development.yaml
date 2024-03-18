@@ -18,3 +18,4 @@ rulesets:
 ui:
   enabled: true
   url: http://localhost:5173
+  apiBase: http://localhost:3000

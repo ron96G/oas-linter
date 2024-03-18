@@ -82,7 +82,7 @@ onMounted(async () => {
         if (inputUrl) {
             const response = await fetch(inputUrl)
             if (response.ok) {
-                input.value = await response.text()
+                input.value = convertInput(await response.text())
             }
         }
     })
