@@ -54,6 +54,8 @@ spec:
           env:
             - name: API_URL
               value: {{ .Values.apiUrl }}
+            - name: EDITOR_URL
+              value: {{ .Values.editorUrl }}
             - name: OIDC_ISSUER
               value: {{ .Values.oidcIssuer }}
             - name: ARTIFACTORY_USER
