@@ -6,17 +6,27 @@ import config from '../config/config'
 import { ID } from '../models/common'
 import { ProbesResponse } from '../models/probes'
 import { Scan } from '../models/scan'
-import { OidcAuth } from './auth/oidc'
 import { ProbesControllerImpl, type Decider } from './probes'
 import { ScanControllerImpl } from './scan'
 
 import cors from '@elysiajs/cors'
 import { existsSync } from 'fs'
+import { jwks } from './auth'
 const ALLOWED_CONTENT_TYPES = ['application/json', 'application/yaml']
 
 export function setup() {
 
-    const oidcAuth = new OidcAuth(config.get<string>('oidc.issuer')!)
+    const jwksPlugin = jwks(config.get<string>('oidc.issuer')!)
+
+    // Not used for now
+    // const oidcPlugin = oidc({
+    //     clientId: config.get<string>('oidc.clientId')!,
+    //     clientSecret: config.get<string>('oidc.clientSecret')!,
+    //     realmUrl: config.get<string>('oidc.issuer')!,
+    //     cookieSecrets: [config.get<string>('oidc.cookieSecret')!],
+    //     redirectHost: config.get<string>('oidc.redirectHost')!,
+    //     defaultRedirectPath: '/',
+    // })
 
     const apiUrl = config.get<string>('api.url')!
     let editorUrl: string | undefined;
@@ -28,17 +38,21 @@ export function setup() {
     }
 
     const app = new Elysia({
-        name: 'scan-api'
+        name: 'linter'
     })
 
     app.use(cors({
         origin: /.*/,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        methods: ['GET', 'OPTIONS'],
         preflight: true
     }))
 
-    app.onError(({ code, error }) => {
-        console.error(`Error ${code}:`, error)
+    app.onAfterHandle((ctx) => {
+        console.log(`${ctx.request.method} ${ctx.request.url}: ${ctx.set.status}`)
+    })
+
+    app.onError(({ code, error, request }) => {
+        console.warn(`${request.method} ${request.url}: ${code} - ${error}`)
         return { code, error: error.message }
     })
 
@@ -78,11 +92,7 @@ export function setup() {
                     url: apiUrl
                 }
             ],
-            security: [
-                {
-                    OAuth2: []
-                }
-            ],
+            security: [],
             components: {
                 securitySchemes: {
                     OAuth2: {
@@ -108,12 +118,14 @@ export function setup() {
                 {
                     name: 'default',
                     description: 'Some general operations'
+                },
+                {
+                    name: 'bff',
+                    description: 'Operations related to the editor'
                 }
             ]
         }
     }))
-
-
 
     // scan routes
     const scanCtl = new ScanControllerImpl()
@@ -124,103 +136,128 @@ export function setup() {
         })
     }
 
-    app.group('/api/v1', (app) =>
-
-        app // .use(oidcAuth.auth())
-
-            .onBeforeHandle(({ headers, set }) => {
-                const contentType = headers['content-type']
-                if (contentType && !ALLOWED_CONTENT_TYPES.includes(contentType)) {
-                    set.status = 415
-                    return {
-                        code: "UNSUPPORTED_CONTENT_TYPE",
-                        error: `Unsupported content type: ${contentType}`
-                    }
-                }
-            })
-
-            .onParse(async ({ request }, contentType) => {
-                if (contentType === 'application/json') {
-                    return request.json()
-                } else if (contentType === 'application/yaml') {
-                    return request.text()
-                }
+    app.onBeforeHandle(({ headers, set }) => {
+        const contentType = headers['content-type']
+        if (contentType && !ALLOWED_CONTENT_TYPES.includes(contentType)) {
+            set.status = 415
+            return {
+                code: "UNSUPPORTED_CONTENT_TYPE",
+                error: `Unsupported content type: ${contentType}`
+            }
+        }
+    })
+        .onParse(async ({ request }, contentType) => {
+            if (contentType === 'application/json') {
+                return request.json()
+            } else if (contentType === 'application/yaml') {
                 return request.text()
-            })
+            }
+            return request.text()
+        })
 
-            .get('/scans/:id', async ({ params: { id }, query: { includeSpec } }) => {
-                return scanCtl.getScan(id, Boolean(includeSpec))
-            }, {
-                params: t.Object({ id: ID }),
-                query: t.Object({
-                    includeSpec: t.Optional(t.String({ enum: ['true', 'false'] }))
-                }),
-                response: Scan,
-                detail: {
-                    summary: 'Get a scan result',
-                    description: 'Get a scan result by its ID',
-                    tags: ['scans']
-                }
-            })
 
-            .get('/scans/:id/spec', async ({ params: { id } }) => {
-                const scan = await scanCtl.getScan(id, true)
-                return scan.spec!
-            }, {
-                params: t.Object({ id: ID }),
-                response: t.String(),
-                detail: {
-                    summary: 'Get a scan result',
-                    description: 'Get a scan result by its ID',
-                    tags: ['scans']
-                }
-            })
+    app.group("/bff", (app) =>
+        app.get('/scans/:id/spec', async ({ params: { id } }) => {
+            const scan = await scanCtl.getScan(id, true)
+            return scan.spec!
+        }, {
+            params: t.Object({ id: ID }),
+            response: t.String(),
+            detail: {
+                summary: 'This is used by the editor to get the spec',
+                description: 'Get a scan result by its ID. This is used by the editor to get the spec',
+                tags: ['bff']
+            }
+        }))
 
-            .get('/scans', ({ query: { tags, status } }) => scanCtl.getScans(status, tags?.split(",")), {
-                response: t.Array(Scan),
-                query: t.Object({
-                    tags: t.Optional(t.String()),
-                    status: t.Optional(t.String({ enum: ['done', 'failed'] }))
-                }),
-                detail: {
-                    summary: 'List scan results',
-                    description: 'List scan results with optional filtering by tags and status',
-                    tags: ['scans']
-                }
-            })
+    app.group('/api/v1', (app) =>
+        app.guard({}, (app) =>
 
-            .use(oidcAuth.auth())
-            .post('/scans', async ({ auth, body, query: { tags, ruleset, includeSpec } }) => {
-                const splitTags = tags?.split(",")
-                splitTags?.push(auth.profile.clientId)
+            app.use(jwksPlugin)
 
-                const scan = scanCtl.scan(body as any, ruleset, splitTags, Boolean(includeSpec))
-                if (editorUrl !== undefined) {
-                    const _scan = await scan
-                    _scan.editor_href = `${editorUrl}?input=${editorApiBase}/api/v1/scans/${_scan.id}/spec&ruleset=${ruleset}&schema=openapi.v3.0`
-                    return _scan
-                }
-                return scan
-            }, {
-                body: t.Any({ description: 'OpenAPI spec' }),
-                response: Scan,
-                query: t.Object({
-                    tags: t.Optional(t.String()),
-                    ruleset: t.Optional(t.String()),
-                    includeSpec: t.Optional(t.String({ enum: ['true', 'false'] }))
-                }),
-                detail: {
-                    summary: 'Scan an OpenAPI spec',
-                    description: 'Scan an OpenAPI spec and return the scan result',
-                    tags: ['scans']
-                }
-            })
+                .onBeforeHandle(async ({ authenticate }) => {
+                    const res = await authenticate()
+                    if (res !== null) {
+                        return res;
+                    }
+                })
 
+                .get('/scans/:id', async ({ params: { id }, query: { includeSpec } }) => {
+                    return scanCtl.getScan(id, Boolean(includeSpec))
+                }, {
+                    params: t.Object({ id: ID }),
+                    query: t.Object({
+                        includeSpec: t.Optional(t.String({ enum: ['true', 'false'] }))
+                    }),
+                    response: Scan,
+                    detail: {
+                        summary: 'Get a scan result',
+                        description: 'Get a scan result by its ID',
+                        tags: ['scans'],
+                        security: [{ OAuth2: [] }]
+                    }
+                })
+
+                .get('/scans/:id/spec', async ({ params: { id } }) => {
+                    const scan = await scanCtl.getScan(id, true)
+                    return scan.spec!
+                }, {
+                    params: t.Object({ id: ID }),
+                    response: t.String(),
+                    detail: {
+                        summary: 'Get a scan result',
+                        description: 'Get a scan result by its ID',
+                        tags: ['scans'],
+                        security: [{ OAuth2: [] }]
+                    }
+                })
+
+                .post('/scans', async ({ auth, body, query: { tags, ruleset, includeSpec } }) => {
+                    const splitTags = tags?.split(",")
+                    splitTags?.push(auth.profile.clientId)
+
+                    const scan = scanCtl.scan(body as any, ruleset, splitTags, Boolean(includeSpec))
+                    if (editorUrl !== undefined) {
+                        const _scan = await scan
+                        _scan.editor_href = `${editorUrl}?input=${editorApiBase}/bff/scans/${_scan.id}/spec&ruleset=${ruleset}&schema=openapi.v3.0`
+                        return _scan
+                    }
+                    return scan
+                }, {
+                    body: t.Any({ description: 'OpenAPI spec' }),
+                    response: Scan,
+                    query: t.Object({
+                        tags: t.Optional(t.String()),
+                        ruleset: t.Optional(t.String()),
+                        includeSpec: t.Optional(t.String({ enum: ['true', 'false'] }))
+                    }),
+                    detail: {
+                        summary: 'Scan an OpenAPI spec',
+                        description: 'Scan an OpenAPI spec and return the scan result',
+                        tags: ['scans'],
+                        security: [{ OAuth2: [] }]
+                    }
+                })
+
+                .get('/scans', ({ query: { tags, status } }) => scanCtl.getScans(status, tags?.split(",")), {
+                    response: t.Array(Scan),
+                    query: t.Object({
+                        tags: t.Optional(t.String()),
+                        status: t.Optional(t.String({ enum: ['done', 'failed'] }))
+                    }),
+                    detail: {
+                        summary: 'List scan results',
+                        description: 'List scan results with optional filtering by tags and status',
+                        tags: ['scans'],
+                        security: [{ OAuth2: [] }]
+                    }
+                })
+        )
     )
 
     app.group('/api/v1/config', (app) =>
 
-        app // .use(oidcAuth.auth())
+        app
 
             .get('/rulesets', () => scanCtl.linter.getSupportedRulesets(), {
                 response: t.Array(t.String()),

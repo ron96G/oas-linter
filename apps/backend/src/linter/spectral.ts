@@ -122,10 +122,11 @@ export class Linter {
                 this.setRuleset(name, await bundleAndLoadRuleset(filename, io), rawBody)
             } catch (e) {
                 console.error(`Failed to refresh ruleset ${filename}:`, e)
+                const cur = this.rulesets.get(name)
                 this.rulesets.set(name, {
                     ok: false,
-                    ruleset: null,
-                    raw: rawBody,
+                    ruleset: cur?.ruleset || null,
+                    raw: cur?.raw || null,
                     error: (e as Error).message
                 })
             }

@@ -1,8 +1,8 @@
 oidc:
   issuer: ${OIDC_ISSUER:http://localhost:8080/realms/dev}
-  clientId: my-client
-  clientSecret: my-secret
-  redirectUri: http://localhost:3000/callback
+  clientId: test-client3
+  clientSecret: uEWMKwEJCddt7KOjVVBnZN8rMhJgpnx0
+  redirectHost: http://localhost:3000
   postLogoutRedirectUri: http://localhost:3000
 
 api:
@@ -17,5 +17,5 @@ rulesets:
 
 ui:
   enabled: true
-  url: http://localhost:5173
+  url: http://localhost:3000
   apiBase: http://localhost:3000
