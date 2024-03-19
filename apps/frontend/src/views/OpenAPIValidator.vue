@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ImportPopup from '@/components/ImportPopup.vue';
 import IntoTable, { InfoItem } from '@/components/IntoTable.vue';
 import TextEditor from '@/components/editor/NextTextEditor.vue';
 import { convertInput, formatInput } from '@/libs/format';
@@ -46,6 +47,13 @@ function getFromQuery(key: string, defValue: string, set: boolean = true) {
     }
     return value ?? defValue
 }
+
+function setInQuery(key: string, value: string) {
+    const url = new URL(window.location.href);
+    url.searchParams.set(key, value)
+    window.history.pushState({}, '', url)
+}
+
 // Observers
 
 watch(() => props.theme, (val: string) => {
@@ -61,31 +69,33 @@ window.addEventListener('beforeunload', (event) => {
     }
 });
 
+
 onMounted(async () => {
     log.info('OpenAPIValidator mounted')
-    _storage.then(async (store) => {
-        await _linter.setup(store)
-        supportedRulesets.value = _linter.supportedRulesets
-        jsonSchemas.value = await loadAllSchemas(store)
-        supportedSchemaVersions.value = jsonSchemas.value.map(s => s.fileMatch?.[0])
+    const store = await _storage
+    await _linter.setup(store)
+    supportedRulesets.value = _linter.supportedRulesets;
 
-        const ruleset = getFromQuery("ruleset", "oas", true)
-        if (ruleset) {
-            selectedRuleset.value = ruleset
-        }
-        const schema = getFromQuery("schema", "openapi.v3.0", true)
-        if (schema) {
-            selectedSchemaVersion.value = schema
-        }
+    const schemas = await loadAllSchemas(store)
+    jsonSchemas.value = schemas
+    supportedSchemaVersions.value = jsonSchemas.value.map(s => s.fileMatch?.[0])
 
-        const inputUrl = getFromQuery("input", "", false)
-        if (inputUrl) {
-            const response = await fetch(inputUrl)
-            if (response.ok) {
-                input.value = convertInput(await response.text())
-            }
+    const ruleset = getFromQuery("ruleset", "oas", true)
+    if (ruleset) {
+        selectedRuleset.value = ruleset
+    }
+    const schema = getFromQuery("schema", "openapi.v3.0", true)
+    if (schema) {
+        selectedSchemaVersion.value = schema
+    }
+
+    const inputUrl = getFromQuery("input", "", false)
+    if (inputUrl) {
+        const response = await fetch(inputUrl)
+        if (response.ok) {
+            input.value = convertInput(await response.text())
         }
-    })
+    }
 })
 
 async function onInit(editor: any) {
@@ -115,11 +125,13 @@ async function onChange(value: string) {
 
 async function onUpdatedSelectedRuleset(e: any) {
     selectedRuleset.value = e.detail.value;
+    setInQuery("ruleset", selectedRuleset.value)
     await onChange(valueTracker.value)
 }
 
 async function onUpdatedSelectedSchemaVersion(e: any) {
     selectedSchemaVersion.value = e.detail.value;
+    setInQuery("schema", selectedSchemaVersion.value)
     await onChange(valueTracker.value)
 }
 
@@ -174,6 +186,7 @@ async function doConvertInput() {
 
 
 <template>
+    <ImportPopup :show="showImportPopup" @changed="(val) => showImportPopup = val" @imported="onImport"></ImportPopup>
     <div id="openapi-validator-wrapper">
         <div id="content">
             <div id="controls-wrapper">

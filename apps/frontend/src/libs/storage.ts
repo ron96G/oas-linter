@@ -96,7 +96,8 @@ export class BackendStorage extends AbstractStorage {
     static async isUp(): Promise<boolean> {
         try {
             const res = await fetch(this.RULESETS_INDEX_PATH)
-            return res.status === 200
+            log.info("Backend is up: " + res.status)
+            return res.status === 200 && res.headers.get("content-type") === "application/json"
         } catch (e) {
             return false
         }

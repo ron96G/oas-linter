@@ -16,15 +16,17 @@
     "@stoplight/spectral-ruleset-bundler": "^1.5.2",
     "@stoplight/spectral-rulesets": "^1.18.1",
     "@telekom/scale-components": "^3.0.0-beta.150",
-    "js-yaml": "*",
-    "monaco-editor": "*",
-    "monaco-yaml": "*",
-    "vue": "*",
-    "vue-resizer": "*"
+    "js-yaml": "^4.1.0",
+    "lodash": "^4.17.21",
+    "monaco-editor": "^0.47.0",
+    "monaco-yaml": "^5.1.1",
+    "vue": "^3.3.4",
+    "vue-resizer": "^1.1.9"
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.2",
     "@types/js-yaml": "^4.0.9",
+    "@types/lodash": "^4.17.0",
     "@types/node": "^20.11.25",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue/tsconfig": "^0.5.1",

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { SchemaItem } from '@/libs/json-schema';
 import * as log from '@/libs/log';
+import * as _ from 'lodash';
 import * as monaco from 'monaco-editor';
 import { markRaw, onMounted, onUnmounted, ref, watch, type Ref } from 'vue';
 import { FILE_PREFIX, configureSchemas } from './functions';
 import { DecorationItem } from './types';
 import { registerWorkers } from './worker';
+
 
 const THEME_MAPPING = new Map(Object.entries({
     'dark': 'vs-dark',
@@ -149,16 +151,15 @@ onMounted(async () => {
         ...props.options
     }))
 
+    const debouncedUpdateValue = _.debounce(() => {
+        log.info('Emitting update:value')
+        emit('update:value', _editor.getModel()?.getValue());
+    }, 500);
+
+
     _editor.onDidChangeModelContent(e => {
         log.debug('Content changed')
-        emit('update:value', _editor.getModel()?.getValue());
-
-        const firstLine = _editor.getModel()?.getValueInRange({
-            startLineNumber: 1,
-            startColumn: 1,
-            endLineNumber: 2,
-            endColumn: 1
-        })
+        debouncedUpdateValue();
     })
 
     try {
