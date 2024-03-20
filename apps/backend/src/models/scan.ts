@@ -8,14 +8,14 @@ const Point = t.Object({
 }, { description: 'Point' })
 
 const Location = t.Object({
-	path: t.Optional(t.String()),
-	start: t.Optional(Point),
-	end: t.Optional(Point)
+	path: t.String(),
+	start: Point,
+	end: Point
 }, { description: 'Location' })
 
 const Violation = t.Object({
 	severity: t.String({ enum: ['information', 'warning', 'error'] }),
-	code: t.Optional(t.String()),
+	code: t.String(),
 	message: t.String(),
 	location: t.Optional(Location)
 }, { description: 'Violation' })

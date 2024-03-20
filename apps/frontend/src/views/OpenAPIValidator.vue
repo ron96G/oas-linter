@@ -93,7 +93,12 @@ onMounted(async () => {
     if (inputUrl) {
         const response = await fetch(inputUrl)
         if (response.ok) {
-            input.value = convertInput(await response.text())
+            const body = await response.text()
+            if (body && determineInputType(body) === 'json') {
+                input.value = convertInput(body)
+            } else {
+                input.value = body
+            }
         }
     }
 })

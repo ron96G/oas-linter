@@ -1,6 +1,7 @@
-import Ajv from "ajv"
-import addFormats from "ajv-formats"
-import type { LintResult } from "."
+import { dereference } from "@apidevtools/json-schema-ref-parser";
+import Ajv from "ajv";
+import addFormats from "ajv-formats";
+import type { LintResult } from ".";
 
 export interface Spec {
     openapi?: string
@@ -72,12 +73,23 @@ export class JsonSchemaLinter {
     }
 
     public async loadSchemaFromUrl(type: SchemaType, version: string, url: string) {
-        const schema = await this.downloadSchema(type, version, url)
-        this.schemas.set(`${type}:${version}`, schema)
-        if (schema.ok) {
-            console.log(`Loaded schema ${type} ${version}`)
-        } else {
-            console.log(`Failed to load schema ${type} ${version}: ${schema.error}`)
+        try {
+            const schema = await this.downloadSchema(type, version, url)
+            await dereference(schema.schema, {
+                dereference: {
+                    circular: "ignore"
+                },
+                continueOnError: false
+            })
+
+            this.schemas.set(`${type}:${version}`, schema)
+            if (schema.ok) {
+                console.log(`Loaded schema ${type} ${version}`)
+            } else {
+                console.log(`Failed to load schema ${type} ${version}: ${schema.error}`)
+            }
+        } catch (error) {
+            console.log(`Failed to load schema ${type} ${version}: ${error}`)
         }
     }
 
