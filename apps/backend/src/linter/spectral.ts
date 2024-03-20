@@ -14,7 +14,7 @@ export interface RuleRef {
 interface RulesetDefinitionWrapper {
     ok: boolean
     ruleset: Ruleset | RulesetDefinition | null
-    hash: string | null
+    hash?: string
     raw: string | null
     error?: string
 }
@@ -56,7 +56,7 @@ export class Linter {
         return this.rulesets.has(name)
     }
 
-    getRuleset(name: string) {
+    getRuleset(name: string): RulesetDefinitionWrapper {
         if (!this.rulesets.has(name)) {
             throw Error(`No ruleset called '${name}' exists.`)
         }
@@ -69,11 +69,11 @@ export class Linter {
 
     private setRuleset(name: string, ruleset: Ruleset | RulesetDefinition, raw?: string, error?: string) {
         this.rulesets.set(name, {
-            ok: true,
+            ok: error === undefined,
+            error: error,
+            hash: raw ? this.hasher.update(raw).digest("hex") : undefined,
             ruleset: ruleset,
-            hash: raw ? this.hasher.update(raw).digest("hex") : null,
             raw: raw || null,
-            error: error
         })
     }
 
@@ -82,7 +82,6 @@ export class Linter {
             ok: true,
             ruleset: ruleset,
             raw: null,
-            hash: null,
             error: ""
         })
     }
@@ -134,10 +133,10 @@ export class Linter {
                 const cur = this.rulesets.get(name)
                 this.rulesets.set(name, {
                     ok: false,
+                    error: (e as Error).message,
+                    hash: cur?.hash,
                     ruleset: cur?.ruleset || null,
                     raw: cur?.raw || null,
-                    hash: cur?.hash || null,
-                    error: (e as Error).message
                 })
             }
         }

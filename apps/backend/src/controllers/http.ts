@@ -11,6 +11,7 @@ import { ScanControllerImpl } from './scan'
 
 import cors from '@elysiajs/cors'
 import { existsSync } from 'fs'
+import { Ruleset } from '../models/ruleset'
 import { jwks } from './auth'
 const ALLOWED_CONTENT_TYPES = ['application/json', 'application/yaml']
 
@@ -271,7 +272,7 @@ export function setup() {
 
             .get('/rulesets/:name', ({ params: { name } }) => scanCtl.linter.getRuleset(name), {
                 params: t.Object({ name: t.String() }),
-                response: t.Object({ ok: t.Boolean(), ruleset: t.Any(), raw: t.Optional(t.Any()), error: t.Optional(t.String()) }),
+                response: Ruleset,
                 detail: {
                     summary: 'Get a ruleset',
                     description: 'Get a ruleset by its name',
