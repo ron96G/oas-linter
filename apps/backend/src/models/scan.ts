@@ -25,8 +25,13 @@ export const Scan = t.Object({
 	editor_href: t.Optional(t.String()),
 	tags: t.Array(t.String()),
 	spec: t.Optional(t.String()),
+	ruleset: t.Object({
+		name: t.String(),
+		hash: t.String()
+	}),
 	status: t.String({ enum: ['valid', 'pending', 'failed', 'invalid'] }),
-	created_at: t.String({ format: 'date-time', default: new Date().toISOString() }),
+	created_at: t.Date({ format: 'date-time', default: new Date().toISOString() }),
+	available_until: t.Date({ format: 'date-time' }),
 	info: t.Object({
 		valid: t.Boolean(),
 		infos: t.Number(),
@@ -35,7 +40,9 @@ export const Scan = t.Object({
 	}),
 	violations: t.Array(Violation)
 
-}, { description: 'Scan result' })
+}, {
+	description: 'Scan result'
+})
 
 export const ScanRequest = t.Any();
 
@@ -67,13 +74,21 @@ export interface ViolationsInfo {
 	warnings: number;
 	errors: number;
 }
+
+export interface RulesetRef {
+	name: string;
+	hash: string;
+}
+
 export interface Scan {
 	id: string;
 	editor_href?: string;
 	spec?: string;
 	tags: string[];
+	ruleset: RulesetRef;
 	status: ScanStatus;
-	created_at: string;
+	created_at: Date;
+	available_until: Date;
 	info: ViolationsInfo;
 	violations: Violation[];
 }

@@ -243,7 +243,7 @@ export function setup() {
                     response: t.Array(Scan),
                     query: t.Object({
                         tags: t.Optional(t.String()),
-                        status: t.Optional(t.String({ enum: ['done', 'failed'] }))
+                        status: t.Optional(t.String({ enum: ['valid', 'pending', 'failed', 'invalid'] }))
                     }),
                     detail: {
                         summary: 'List scan results',

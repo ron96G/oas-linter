@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { NotFoundError } from "elysia";
 import { JsonSchemaLinter, Linter } from "../linter";
 import type { Scan, ScanRequest } from "../models/scan";
 import { InMemoryStore } from "../store/inmemory";
@@ -10,25 +11,38 @@ interface ScanController {
     getScans(status?: string, tags?: string[]): Promise<Scan[]>;
 }
 
+const OneMinute = 1000 * 60;
+
 export class ScanControllerImpl implements ScanController {
 
     readonly linter = new Linter();
     readonly schemaLinter = new JsonSchemaLinter();
-    readonly store: Store<Scan> = new InMemoryStore<Scan>();
+    readonly store: Store<Scan> = new InMemoryStore<Scan>(OneMinute * 10);
     readonly defaultRuleset: string;
+    readonly availableFor: number;
 
-    constructor(defaultRuleset = "oas") {
+    constructor(defaultRuleset = "oas", availableFor = OneMinute * 60 * 2) {
         this.defaultRuleset = defaultRuleset;
+        this.availableFor = availableFor;
     }
 
     async scan(req: ScanRequest, rulesetName = "oas", tags?: string[], includeSpec = false): Promise<Scan> {
+        if (!this.linter.hasRuleset(rulesetName)) {
+            throw new NotFoundError(`Ruleset "${rulesetName}" does not exist`);
+        }
+
         const id = randomUUID();
         const scan: Scan = {
             id: id,
             spec: req,
             tags: tags || [],
             status: "pending",
-            created_at: new Date().toISOString(),
+            created_at: new Date(),
+            available_until: new Date(Date.now() + this.availableFor),
+            ruleset: {
+                name: rulesetName,
+                hash: this.linter.getRuleset(rulesetName).hash!
+            },
             info: {
                 valid: false,
                 infos: 0,
@@ -62,7 +76,7 @@ export class ScanControllerImpl implements ScanController {
     async getScan(id: string, includeSpec = false): Promise<Scan> {
         const scan = await this.store.get(id);
         if (scan === null) {
-            throw new Error("Scan not found");
+            throw new NotFoundError(`Scan "${id}" does not exist`);
         }
         const shallowCopy = { ...scan };
         if (!includeSpec) {

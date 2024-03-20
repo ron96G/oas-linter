@@ -14,6 +14,7 @@ export interface RuleRef {
 interface RulesetDefinitionWrapper {
     ok: boolean
     ruleset: Ruleset | RulesetDefinition | null
+    hash: string | null
     raw: string | null
     error?: string
 }
@@ -21,12 +22,15 @@ interface RulesetDefinitionWrapper {
 export class Linter {
 
     private readonly rulesets = new Map<string, RulesetDefinitionWrapper>();
+    private readonly hasher = new Bun.CryptoHasher("sha256")
 
     constructor() {
+        const raw = "{\n\"extends\": \"spectral:oas\",\n\"rules\": {}\n}";
         this.rulesets.set("spectral:oas", {
             ok: true,
             ruleset: new Ruleset(Rulesets.oas),
-            raw: "{\n\"extends\": \"spectral:oas\",\n\"rules\": {}\n}",
+            raw: raw,
+            hash: this.hasher.update(raw).digest("hex"),
             error: ""
         })
     }
@@ -48,6 +52,10 @@ export class Linter {
         return Array.from(this.rulesets.values())
     }
 
+    hasRuleset(name: string) {
+        return this.rulesets.has(name)
+    }
+
     getRuleset(name: string) {
         if (!this.rulesets.has(name)) {
             throw Error(`No ruleset called '${name}' exists.`)
@@ -63,6 +71,7 @@ export class Linter {
         this.rulesets.set(name, {
             ok: true,
             ruleset: ruleset,
+            hash: raw ? this.hasher.update(raw).digest("hex") : null,
             raw: raw || null,
             error: error
         })
@@ -73,13 +82,13 @@ export class Linter {
             ok: true,
             ruleset: ruleset,
             raw: null,
+            hash: null,
             error: ""
         })
     }
 
     public async addRulesetFromURL(name: string, url: string, refreshInterval?: number) {
         let rawBody: string;
-
         const resolveFetch = async (uri: string, opts?: RequestInit) => {
             const match = uri.match(/(https?):\/\/(.+):(.+)@(.*)/)!
             const scheme = match[1]
@@ -127,6 +136,7 @@ export class Linter {
                     ok: false,
                     ruleset: cur?.ruleset || null,
                     raw: cur?.raw || null,
+                    hash: cur?.hash || null,
                     error: (e as Error).message
                 })
             }

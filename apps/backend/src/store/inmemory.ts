@@ -1,8 +1,24 @@
 import type { Store } from "./store";
 
-export class InMemoryStore<T> implements Store<T> {
+interface DeletionItem {
+    available_until: Date;
+}
+
+export class InMemoryStore<T extends DeletionItem> implements Store<T> {
 
     private store: Map<string, T> = new Map();
+
+    constructor(deleteInterval: number) {
+        setInterval(() => {
+            const now = new Date();
+            for (const [key, value] of this.store.entries()) {
+                if (value.available_until < now) {
+                    console.log(`Deleting store entry ${key} because it is expired`)
+                    this.store.delete(key);
+                }
+            }
+        }, deleteInterval);
+    }
 
     async get(key: string): Promise<T | null> {
         return this.store.get(key) || null;
@@ -14,5 +30,9 @@ export class InMemoryStore<T> implements Store<T> {
 
     async getAll(): Promise<T[]> {
         return Array.from(this.store.values());
+    }
+
+    async delete(key: string): Promise<void> {
+        this.store.delete(key);
     }
 }
