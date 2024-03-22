@@ -1,18 +1,18 @@
 oidc:
-  issuer: ${OIDC_ISSUER:http://localhost:8080/realms/dev}
+    issuer: ${OIDC_ISSUER:http://localhost:8080/realms/dev}
 
 api:
-  url: ${API_URL:http://localhost:3000}
+    url: ${API_URL:http://localhost:3000}
 
 rulesets:
-  - name: gapi
-    url: https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}@artifactory.devops.telekom.de/artifactory/published-api-linting-rules/spectral/v2/latest/gapi-linter-rules.spectral.yaml
-    refreshInterval: 300
-  - name: basic
-    url: https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}@artifactory.devops.telekom.de/artifactory/published-api-linting-rules/spectral/v2/latest/basis-linter-rules.spectral.yaml
-    refreshInterval: 300
+    - name: gapi
+      url: https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}@artifactory.devops.telekom.de/artifactory/published-api-linting-rules/spectral/v2/latest/gapi-linter-rules.spectral.yaml
+      refreshInterval: 300
+    - name: basic
+      url: https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}@artifactory.devops.telekom.de/artifactory/published-api-linting-rules/spectral/v2/latest/basis-linter-rules.spectral.yaml
+      refreshInterval: 300
 
 ui:
-  enabled: true
-  url: ${EDITOR_URL:http://localhost:5173}
-  apiBase: ""
+    enabled: true
+    url: ${EDITOR_URL:http://localhost:5173}
+    apiBase: ''

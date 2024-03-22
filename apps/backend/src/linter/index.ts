@@ -1,3 +1,3 @@
-export * from "./common";
-export * from "./json-schema";
-export * from "./spectral";
+export * from './common'
+export * from './json-schema'
+export * from './spectral'

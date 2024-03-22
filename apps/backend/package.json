@@ -1,38 +1,41 @@
 {
-  "name": "@linter/backend",
-  "license": "Apache-2.0",
-  "module": "index.ts",
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest",
-    "@types/jsonpath": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "dependencies": {
-    "@elysiajs/cookie": "^0.8.0",
-    "@elysiajs/cors": "^0.8.0",
-    "@elysiajs/static": "^0.8.1",
-    "@elysiajs/swagger": "^0.8.5",
-    "@stoplight/spectral-core": "^1.18.3",
-    "@stoplight/spectral-parsers": "^1.0.3",
-    "@stoplight/spectral-ruleset-bundler": "^1.5.2",
-    "@stoplight/spectral-rulesets": "^1.18.1",
-    "ajv": "8.12.0",
-    "elysia": "^0.8.17",
-    "jose": "^5.2.3",
-    "jsonpath": "^1.1.1",
-    "openid-client": "^5.6.5",
-    "yaml": "^2.4.1"
-  },
-  "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "build": "bun build src/index.ts",
-    "start": "NODE_ENV=production bun src/index.ts",
-    "test": "bun test",
-    "docker:build": "docker build -t linter-api . -f build/Dockerfile",
-    "helm:install": "helm install linter ./helm --namespace=default",
-    "helm:upgrade": "helm upgrade linter ./helm --namespace=default"
-  }
+    "name": "@linter/backend",
+    "license": "Apache-2.0",
+    "module": "index.ts",
+    "type": "module",
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@types/jsonpath": "latest",
+        "prettier": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@apidevtools/json-schema-ref-parser": "^11.5.4",
+        "@elysiajs/cookie": "^0.8.0",
+        "@elysiajs/cors": "^0.8.0",
+        "@elysiajs/static": "^0.8.1",
+        "@elysiajs/swagger": "^0.8.5",
+        "@stoplight/spectral-core": "^1.18.3",
+        "@stoplight/spectral-parsers": "^1.0.3",
+        "@stoplight/spectral-ruleset-bundler": "^1.5.2",
+        "@stoplight/spectral-rulesets": "^1.18.1",
+        "ajv": "8.12.0",
+        "elysia": "^0.8.17",
+        "jose": "^5.2.3",
+        "jsonpath": "^1.1.1",
+        "openid-client": "^5.6.5",
+        "yaml": "^2.4.1"
+    },
+    "scripts": {
+        "dev": "bun --watch src/index.ts",
+        "build": "bun build src/index.ts",
+        "start": "NODE_ENV=production bun src/index.ts",
+        "test": "bun test",
+        "format": "prettier --write .",
+        "docker:build": "docker build -t linter-api . -f build/Dockerfile",
+        "helm:install": "helm install linter ./helm --namespace=default",
+        "helm:upgrade": "helm upgrade linter ./helm --namespace=default"
+    }
 }
