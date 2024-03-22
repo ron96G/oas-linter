@@ -18,7 +18,7 @@ export async function loadAllSchemas(store: Storage) {
         res.push({
             fileMatch: [`${item.type}.v${item.version}`],
             schema: item.value,
-            uri: `${currentHost}/schemas/${item.type}/v${item.version}/schema.json`,
+            uri: `${currentHost}/schemas/${item.type}/${item.version}/schema.json`,
         })
     }
     return res
