@@ -160,6 +160,14 @@ export function setup() {
         })
     }
 
+    const schemasCfg =
+        config.get<Array<{ name: string; url: string }>>('schemas')
+    if (schemasCfg) {
+        schemasCfg.forEach(({ name, url }) => {
+            scanCtl.schemaLinter.addNamedSchemaFromUrl(name, url)
+        })
+    }
+
     app.onBeforeHandle(({ headers, set }) => {
         const contentType = headers['content-type']
         if (contentType && !ALLOWED_CONTENT_TYPES.includes(contentType)) {

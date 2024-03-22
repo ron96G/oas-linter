@@ -15,6 +15,14 @@ rulesets:
       url: https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}@artifactory.devops.telekom.de/artifactory/published-api-linting-rules/spectral/v2/latest/basis-linter-rules.spectral.yaml
       refreshInterval: 300
 
+schemas:
+    - name: openapi:2.0-remote
+      url: https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v2.0/schema.json
+    - name: openapi:3.0
+      url: https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json
+    - name: openapi:3.1
+      url: https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema.json
+
 ui:
     enabled: true
     url: http://localhost:3000

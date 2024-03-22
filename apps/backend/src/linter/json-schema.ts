@@ -1,6 +1,7 @@
 import $RefParser from '@apidevtools/json-schema-ref-parser'
 import Ajv from 'ajv'
 import addFormats from 'ajv-formats'
+import { readFileSync } from 'fs'
 import type { LintResult } from '.'
 
 export interface Spec {
@@ -9,7 +10,7 @@ export interface Spec {
     asyncapi?: string
 }
 
-type SchemaType = 'openapi' | 'asyncapi'
+export type SchemaType = 'openapi' | 'asyncapi'
 
 export interface SchemaWrapper {
     ok: boolean
@@ -30,22 +31,6 @@ export class JsonSchemaLinter {
         this.ajv = addFormats(new Ajv({ allErrors: true, strict: false }))
         const Ajv4 = require('ajv-draft-04')
         this.ajv4 = addFormats(new Ajv4({ allErrors: true, strict: false }))
-
-        this.loadSchemaFromUrl(
-            'openapi',
-            '2.0',
-            'https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v2.0/schema.json'
-        )
-        this.loadSchemaFromUrl(
-            'openapi',
-            '3.0',
-            'https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json'
-        )
-        this.loadSchemaFromUrl(
-            'openapi',
-            '3.1',
-            'https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema.json'
-        )
     }
 
     public isOk(): boolean {
@@ -70,21 +55,27 @@ export class JsonSchemaLinter {
         version: string,
         url: string
     ): Promise<SchemaWrapper> {
-        const res = await fetch(url)
-        if (res.status !== 200) {
-            return {
-                ok: false,
-                type: type,
-                version: version,
-                schema: null,
-                error: `Failed to download schema ${type} ${version} from ${url}`,
-            } satisfies SchemaWrapper
+        let schema
+        if (url.startsWith('file://')) {
+            const content = readFileSync(url.replace('file://', ''))
+            schema = JSON.parse(content.toString())
+        } else {
+            const res = await fetch(url)
+            if (res.status !== 200) {
+                return {
+                    ok: false,
+                    type: type,
+                    version: version,
+                    schema: null,
+                    error: `Failed to download schema ${type} ${version} from ${url}`,
+                } satisfies SchemaWrapper
+            }
+
+            schema = await res.json()
         }
 
-        const schema = await res.json()
         const bundledSchema = await $RefParser.bundle(schema)
         bundledSchema.id = bundledSchema.id?.replace('http://', 'https://')
-
         return {
             ok: true,
             type: type,
@@ -97,7 +88,12 @@ export class JsonSchemaLinter {
         } satisfies SchemaWrapper
     }
 
-    public async loadSchemaFromUrl(
+    public async addNamedSchemaFromUrl(name: string, url: string) {
+        const [type, version] = name.split(':')
+        await this.addSchemaFromUrl(type as SchemaType, version, url)
+    }
+
+    public async addSchemaFromUrl(
         type: SchemaType,
         version: string,
         url: string
