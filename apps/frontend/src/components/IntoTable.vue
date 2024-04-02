@@ -35,8 +35,15 @@ const props = defineProps({
     infos: {
         type: Array<InfoItem>,
         default: []
+    },
+    small: {
+        type: Boolean,
+        default: false
     }
 })
+
+
+const columnClass = props.small ? 'small-column' : 'column'
 
 const emit = defineEmits(['jumpToLine'])
 
@@ -57,13 +64,13 @@ watch(() => props.infos, (newInfos) => {
     <div id="notification-wrapper">
         <table v-if="props.infos.length > 0">
             <tr>
-                <th class="column">Level</th>
-                <th class="column">Message</th>
+                <th :class="columnClass">Level</th>
+                <th :class="columnClass">Message</th>
             </tr>
             <template v-for="item in infos">
                 <tr @click="emit('jumpToLine', item.start)">
-                    <td class="column"> {{ getMessage(item.severity) }} </td>
-                    <td class="column" style="max-width: 60vw;" v-html="item.formattedMessage"></td>
+                    <td :class="columnClass"> {{ getMessage(item.severity) }} </td>
+                    <td :class="columnClass" style="max-width: 60vw;" v-html="item.formattedMessage"></td>
                 </tr>
             </template>
         </table>
@@ -76,6 +83,7 @@ watch(() => props.infos, (newInfos) => {
     padding-top: 20px;
     max-height: 96vh;
     overflow: auto;
+    margin-bottom: 25px;
 }
 
 table,
@@ -103,5 +111,11 @@ table {
     min-width: 20px;
     text-align: start;
     padding: 10px;
+}
+
+.small-column {
+    min-width: 20px;
+    text-align: start;
+    padding: 1px;
 }
 </style>

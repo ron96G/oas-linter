@@ -28,6 +28,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/lodash": "^4.17.0",
     "@types/node": "^20.11.25",
+    "@types/swagger-ui": "^3.52.4",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue/tsconfig": "^0.5.1",
     "monaco-editor-webpack-plugin": "^7.1.0",

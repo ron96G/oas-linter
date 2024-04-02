@@ -1,15 +1,31 @@
 <script setup lang="ts">
 import ImportPopup from '@/components/ImportPopup.vue';
 import IntoTable, { InfoItem } from '@/components/IntoTable.vue';
+import SwaggerUI from '@/components/SwaggerUI.vue';
 import TextEditor from '@/components/editor/NextTextEditor.vue';
-import { convertInput, formatInput } from '@/libs/format';
+import { convertInput, determineInputType, formatInput } from '@/libs/format';
 import { SchemaItem, loadAllSchemas } from "@/libs/json-schema";
-import { Linter, determineInputType } from "@/libs/linter";
+import { Linter } from "@/libs/linter";
 import * as log from '@/libs/log';
 import { createStorage } from "@/libs/storage";
 import { onMounted, ref, watch, type Ref } from "vue";
-import { DragCol } from 'vue-resizer';
+import { DragCol, DragRow } from 'vue-resizer';
 
+function getFromQuery(key: string, defValue: string, set: boolean = true) {
+    const url = new URL(window.location.href);
+    const value = url.searchParams.get(key)
+    if (!value && set) {
+        url.searchParams.set(key, defValue)
+        window.history.pushState({}, '', url)
+    }
+    return value ?? defValue
+}
+
+function setInQuery(key: string, value: string) {
+    const url = new URL(window.location.href);
+    url.searchParams.set(key, value)
+    window.history.pushState({}, '', url)
+}
 
 const props = defineProps({
     theme: {
@@ -38,21 +54,7 @@ const selectedRuleset = ref("")
 const selectedSchemaVersion = ref("")
 const jsonSchemas: Ref<Array<SchemaItem>> = ref([])
 
-function getFromQuery(key: string, defValue: string, set: boolean = true) {
-    const url = new URL(window.location.href);
-    const value = url.searchParams.get(key)
-    if (!value && set) {
-        url.searchParams.set(key, defValue)
-        window.history.pushState({}, '', url)
-    }
-    return value ?? defValue
-}
-
-function setInQuery(key: string, value: string) {
-    const url = new URL(window.location.href);
-    url.searchParams.set(key, value)
-    window.history.pushState({}, '', url)
-}
+const showSwaggerUI = ref(false)
 
 // Observers
 
@@ -72,6 +74,10 @@ window.addEventListener('beforeunload', (event) => {
 
 onMounted(async () => {
     log.info('OpenAPIValidator mounted')
+
+    log.info('Setting theme to ' + props.theme)
+    editorTheme.value = props.theme
+
     const store = await _storage
     await _linter.setup(store)
     supportedRulesets.value = _linter.supportedRulesets;
@@ -187,6 +193,14 @@ async function doConvertInput() {
         console.log(e)
     }
 }
+
+async function doShowSwaggerUI() {
+    log.info('Toggling Swagger UI')
+    input.value = valueTracker.value
+    showSwaggerUI.value = !showSwaggerUI.value
+
+    await onChange(valueTracker.value)
+}
 </script>
 
 
@@ -219,19 +233,47 @@ async function doConvertInput() {
                 <scale-button class="controls-item" @click="doFormatInput"> Format</scale-button>
                 <scale-button class="controls-item" @click="doConvertInput"> Convert<br>(json/yaml)</scale-button>
                 <scale-button class="controls-item" @click="doResetAll"> Reset</scale-button>
+                <scale-switch label="Show Swagger UI" @change="doShowSwaggerUI"
+                    style="margin: auto 0 auto 0;"></scale-switch>
             </div>
-            <DragCol width="100vw" height="96vh" sliderHoverColor="#ffffff" sliderBgHoverColor="#e20074"
-                sliderColor="#000000" sliderBgColor="#ffffff" sliderWidth="15" leftPercent="40">
-                <template #left>
-                    <TextEditor id="input-editor" :value="input" :lang="inputType" @update:value="onChange"
-                        @update:schema="onSchemaChange" @init="onInit" :annotations="annotations" :focusLine="focusLine"
-                        :theme="editorTheme" :schemas="jsonSchemas" :modelFileUri="selectedSchemaVersion">
-                    </TextEditor>
-                </template>
-                <template #right>
-                    <IntoTable :infos="annotations" @jump-to-line="doJumpToLine"></IntoTable>
-                </template>
-            </DragCol>
+            <div v-if="!showSwaggerUI">
+                <DragCol width="100vw" height="96vh" sliderHoverColor="#ffffff" sliderBgHoverColor="#e20074"
+                    sliderColor="#000000" sliderBgColor="#ffffff" sliderWidth="15" leftPercent="40">
+                    <template #left>
+                        <TextEditor id="input-editor" :value="input" :lang="inputType" @update:value="onChange"
+                            @update:schema="onSchemaChange" @init="onInit" :annotations="annotations"
+                            :focusLine="focusLine" :theme="editorTheme" :schemas="jsonSchemas"
+                            :modelFileUri="selectedSchemaVersion">
+                        </TextEditor>
+                    </template>
+                    <template #right>
+                        <IntoTable :infos="annotations" @jump-to-line="doJumpToLine"></IntoTable>
+                    </template>
+                </DragCol>
+            </div>
+            <div v-else>
+                <DragCol width="99.2vw" height="94vh" sliderHoverColor="#ffffff" sliderBgHoverColor="#e20074"
+                    sliderColor="#000000" sliderBgColor="#ffffff" sliderWidth="15" leftPercent="40">
+                    <template #left>
+                        <DragRow width="100%" height="96vh" sliderHoverColor="#ffffff" sliderBgHoverColor="#e20074"
+                            sliderColor="#000000" sliderBgColor="#ffffff" sliderWidth="15" topPercent="80">
+                            <template #top>
+                                <TextEditor id="input-editor" :value="input" :lang="inputType" @update:value="onChange"
+                                    @update:schema="onSchemaChange" @init="onInit" :annotations="annotations"
+                                    :focusLine="focusLine" :theme="editorTheme" :schemas="jsonSchemas"
+                                    :modelFileUri="selectedSchemaVersion">
+                                </TextEditor>
+                            </template>
+                            <template #bottom>
+                                <IntoTable :infos="annotations" @jump-to-line="doJumpToLine" small></IntoTable>
+                            </template>
+                        </DragRow>
+                    </template>
+                    <template #right>
+                        <SwaggerUI :theme="editorTheme" :spec="valueTracker"> </SwaggerUI>
+                    </template>
+                </DragCol>
+            </div>
         </div>
     </div>
 </template>
@@ -269,5 +311,9 @@ async function doConvertInput() {
 
 #input-editor {
     height: 96vh;
+}
+
+.drager_bottom>div {
+    overflow: auto;
 }
 </style>

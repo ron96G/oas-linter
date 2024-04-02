@@ -1,7 +1,5 @@
 import YAML from 'js-yaml';
 
-import { determineInputType } from "@/libs/linter"
-
 export function formatInput(input: string) {
     try {
         if (determineInputType(input) == 'json') {
@@ -13,6 +11,14 @@ export function formatInput(input: string) {
         throw e
     }
 }
+
+export function determineInputType(input: string) {
+    if (input[0] == "{") {
+        return 'json'
+    }
+    return 'yaml'
+}
+
 
 export function convertInput(input: string) {
     try {
@@ -27,3 +33,10 @@ export function convertInput(input: string) {
     }
 }
 
+export function toObject(input: string) {
+    if (determineInputType(input) == 'json') {
+        return JSON.parse(input)
+    } else {
+        return YAML.load(input)
+    }
+}
