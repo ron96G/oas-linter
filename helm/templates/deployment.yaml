@@ -58,6 +58,8 @@ spec:
               value: {{ .Values.editorUrl }}
             - name: OIDC_ISSUER
               value: {{ .Values.oidcIssuer }}
+            - name: OIDC_TRUSTED_ISSUERS
+              value: {{ .Values.oidcTrustedIssuers }}
             - name: ARTIFACTORY_USER
               valueFrom:
                 secretKeyRef:

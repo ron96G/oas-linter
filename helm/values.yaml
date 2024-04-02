@@ -77,6 +77,7 @@ affinity: {}
 
 
 # oidcIssuer: https://stargate-integration.test.dhei.telekom.de/auth/realms/team-default
+# oidcTrustedIssuers: https://stargate.qa.dhei.telekom.de/auth/realms/team-sit,https://stargate.qa.dhei.telekom.de/auth/realms/team-av
 # apiUrl: https://linter--integration.test.dhei.telekom.de
 # editorUrl: https://linter--integration.test.dhei.telekom.de
 # artifactoryUsername: <path:secret/data/hyperion/dev-test-rover_integration/linter-server#ARTIFACTORY_USER>
