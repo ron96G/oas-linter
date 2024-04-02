@@ -21,6 +21,9 @@
         "noUnusedParameters": false,
         "noPropertyAccessFromIndexSignature": false,
         //
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "paths": {
+            "@/*": ["./src/*"]
+        }
     }
 }

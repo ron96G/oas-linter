@@ -1,3 +1,4 @@
+import { logger } from '@/log'
 import { Elysia, t } from 'elysia'
 import { Issuer, TokenSet, generators, type Client } from 'openid-client'
 
@@ -76,7 +77,7 @@ export const oidc = async (options: Options) => {
             }
             const profile = await storage.get(id)
             if (profile.expired()) {
-                console.log('Token expired')
+                logger.info('Token expired')
                 storage.remove(id)
                 return false
             }
@@ -101,8 +102,8 @@ export const oidc = async (options: Options) => {
 
     const refreshAccessToken = async (refreshToken: string) => {
         const tokenSet = await client!.refresh(refreshToken)
-        console.log('refreshed and validated tokens %j', tokenSet)
-        console.log('refreshed ID Token claims %j', tokenSet.claims())
+        logger.info('refreshed and validated tokens %j', tokenSet)
+        logger.info('refreshed ID Token claims %j', tokenSet.claims())
         return tokenSet
     }
 
@@ -132,12 +133,12 @@ export const oidc = async (options: Options) => {
 
         .get('/login', async ({ set, cookie: { oidcSession } }) => {
             const currentSession = oidcSession.get()
-            console.log(
+            logger.info(
                 `[oidc.login] Session=${JSON.stringify(currentSession)}`
             )
 
             if (currentSession === undefined) {
-                console.log(`[oidc.login] Setting session cookie`)
+                logger.info(`[oidc.login] Setting session cookie`)
                 oidcSession.value = {
                     uid: generators.random(),
                     oidcAuthorized: false,
@@ -170,7 +171,7 @@ export const oidc = async (options: Options) => {
         .get('/callback', async ({ request, cookie: { oidcSession }, set }) => {
             const { uid, oidcState, oidcOriginalRequestUrl } =
                 oidcSession.get()!
-            console.log(
+            logger.info(
                 '[oidc.callback] oidcOriginalRequestUrl',
                 oidcOriginalRequestUrl
             )
@@ -179,9 +180,9 @@ export const oidc = async (options: Options) => {
                 code_verifier: codeVerifier,
                 state: oidcState,
             })
-            console.log('received and validated tokens %j', tokenSet)
+            logger.info('received and validated tokens %j', tokenSet)
 
-            console.log(
+            logger.info(
                 `[oidc.callback] Setting session cookie. Authorized=true`
             )
             oidcSession.value = {
@@ -197,7 +198,7 @@ export const oidc = async (options: Options) => {
         .get('/refresh', async ({ query, set }) => {
             const refreshToken = query['refreshToken']!
             const tokens = await refreshAccessToken(refreshToken)
-            // console.log('refreshed tokens %j', tokens);
+            // logger.info('refreshed tokens %j', tokens);
             set.status = 200
             return tokens
         })
@@ -223,15 +224,15 @@ export const oidc = async (options: Options) => {
 
                 authorizedWithRedirect: async (): Promise<boolean> => {
                     const session = ctx.cookie.oidcSession.get()
-                    console.log(
+                    logger.info(
                         '[oidc.authorizedWithRedirect] active-session',
                         session
                     )
                     if (await validateToken(session?.uid)) {
-                        console.log('active-session-authorized')
+                        logger.info('active-session-authorized')
                         return true
                     }
-                    console.log(
+                    logger.info(
                         `[oidc.authorizedWithRedirect] Setting session cookie`
                     )
                     ctx.cookie.oidcSession.value = {

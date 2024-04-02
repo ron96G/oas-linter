@@ -1,5 +1,6 @@
 oidc:
     issuer: ${OIDC_ISSUER:http://localhost:8080/realms/dev}
+    trustedIssuers: ${OIDC_TRUSTED_ISSUERS:http://localhost:8080/realms/test}
     clientId: test-client3
     clientSecret: uEWMKwEJCddt7KOjVVBnZN8rMhJgpnx0
     redirectHost: http://localhost:3000

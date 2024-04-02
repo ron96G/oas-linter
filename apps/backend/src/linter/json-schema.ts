@@ -3,6 +3,7 @@ import Ajv from 'ajv'
 import addFormats from 'ajv-formats'
 import { readFileSync } from 'fs'
 import type { LintResult } from '.'
+import { logger } from '../log'
 
 export interface Spec {
     openapi?: string
@@ -103,14 +104,14 @@ export class JsonSchemaLinter {
 
             this.schemas.set(`${type}:${version}`, schema)
             if (schema.ok) {
-                console.log(`Loaded schema ${type} ${version}`)
+                logger.info(`Loaded schema ${type} ${version}`)
             } else {
-                console.log(
+                logger.info(
                     `Failed to load schema ${type} ${version}: ${schema.error}`
                 )
             }
         } catch (error) {
-            console.log(`Failed to load schema ${type} ${version}: ${error}`)
+            logger.info(`Failed to load schema ${type} ${version}: ${error}`)
         }
     }
 
@@ -137,7 +138,7 @@ export class JsonSchemaLinter {
         }
 
         if (schema) {
-            console.log(`Linting ${schema.type} ${schema.version} `)
+            logger.info(`Linting ${schema.type} ${schema.version} `)
             const validate = ajv.compile(schema.schema)
             const valid = validate(spec)
             if (valid) {
@@ -176,7 +177,7 @@ export class JsonSchemaLinter {
                 errors: validate.errors!.length,
             } satisfies LintResult
         } else {
-            console.log('No schema found')
+            logger.info('No schema found')
         }
         return {
             valid: false,

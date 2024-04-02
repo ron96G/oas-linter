@@ -26,6 +26,7 @@
         "jose": "^5.2.3",
         "jsonpath": "^1.1.1",
         "openid-client": "^5.6.5",
+        "pino": "^8.19.0",
         "yaml": "^2.4.1"
     },
     "scripts": {

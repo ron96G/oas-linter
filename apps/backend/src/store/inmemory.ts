@@ -1,3 +1,4 @@
+import { logger } from '../log'
 import type { Store } from './store'
 
 interface DeletionItem {
@@ -12,7 +13,7 @@ export class InMemoryStore<T extends DeletionItem> implements Store<T> {
             const now = new Date()
             for (const [key, value] of this.store.entries()) {
                 if (value.available_until < now) {
-                    console.log(
+                    logger.info(
                         `Deleting store entry ${key} because it is expired`
                     )
                     this.store.delete(key)
