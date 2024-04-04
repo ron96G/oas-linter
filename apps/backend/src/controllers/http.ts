@@ -1,5 +1,5 @@
 import { swagger } from '@elysiajs/swagger'
-import { Elysia, t, type Context } from 'elysia'
+import { Elysia, t } from 'elysia'
 
 import staticPlugin from '@elysiajs/static'
 import config from '../config/config'
@@ -11,14 +11,27 @@ import { ScanControllerImpl } from './scan'
 
 import cors from '@elysiajs/cors'
 import { existsSync } from 'fs'
+import { logger } from '../log'
 import { Ruleset } from '../models/ruleset'
-import { jwks } from './auth'
+import { addTrustedIssuer, jwks } from './auth'
 import { etag } from './cache/etag'
+import { logger as logMw } from './logger'
 
 const ALLOWED_CONTENT_TYPES = ['application/json', 'application/yaml']
 
 export function setup() {
-    const jwksPlugin = jwks(config.get<string>('oidc.issuer')!)
+    // downward compatibility
+    const issuer = config.get<string>('oidc.issuer')
+    if (issuer) {
+        addTrustedIssuer(issuer)
+    }
+
+    for (const issuer of config
+        .get<string>('oidc.trustedIssuers')
+        ?.split(',') ?? []) {
+        addTrustedIssuer(issuer)
+    }
+    const jwksPlugin = jwks()
 
     // Not used for now
     // const oidcPlugin = oidc({
@@ -44,6 +57,13 @@ export function setup() {
     })
 
     app.use(
+        logMw({
+            level: config.get<string>('log.level') ?? 'info',
+            ignoredPaths: [/\/q\/.*/],
+        })
+    )
+
+    app.use(
         cors({
             origin: /.*/,
             methods: ['GET', 'HEAD', 'OPTIONS'],
@@ -52,22 +72,13 @@ export function setup() {
         })
     )
 
-    const ignoredPaths = [/\/q\/.*/]
-    const accessLogger = (ctx: Context) => {
-        if (ignoredPaths.some((p) => p.test(ctx.request.url))) {
-            return
-        }
-
-        if (ctx.request.url)
-            console.log(
-                `${ctx.request.method} ${ctx.request.url}: ${ctx.set.status}`
-            )
-    }
-
-    app.onAfterHandle(accessLogger)
-
     app.onError(({ code, error, request }) => {
-        console.warn(`${request.method} ${request.url}: ${code} - ${error}`)
+        logger.warn({
+            method: request.method,
+            url: request.url,
+            status: code,
+            error,
+        })
         return { code, error: error.message }
     })
 

@@ -1,18 +1,47 @@
+import { logger } from '@/log'
 import { Elysia } from 'elysia'
 import * as jose from 'jose'
 
-export const jwks = (issuer: string) => {
-    const ISSUER = issuer.trim()
-    const JWKS = jose.createRemoteJWKSet(
-        new URL(ISSUER + '/protocol/openid-connect/certs')
-    )
+type JwksFunction = (
+    protectedHeader?: jose.JWSHeaderParameters,
+    token?: jose.FlattenedJWSInput
+) => Promise<jose.KeyLike>
 
+const trustedIssuers: string[] = []
+const jwksMap = new Map<string, JwksFunction>()
+
+export const addTrustedIssuer = (issuer: string) => {
+    issuer = issuer.trim()
+    logger.info('Adding trusted issuer: ' + issuer)
+    const jwks = jose.createRemoteJWKSet(
+        new URL(issuer + '/protocol/openid-connect/certs')
+    )
+    trustedIssuers.push(issuer)
+    jwksMap.set(issuer, jwks)
+}
+
+const findIssuer = (issuer: string): JwksFunction => {
+    if (trustedIssuers.includes(issuer)) {
+        return jwksMap.get(issuer)!
+    }
+    throw new Error('Issuer not trusted')
+}
+
+export const jwks = () => {
     const validate = async (
         jwt: string
     ): Promise<{ profile: any; scopes: string[] }> => {
-        const { payload } = await jose.jwtVerify(jwt, JWKS, {
-            issuer: ISSUER,
+        const payload = jose.decodeJwt(jwt)
+        const issuer = payload.iss
+        if (!issuer) {
+            throw new Error('Issuer not found in token')
+        }
+        const JWKS = findIssuer(issuer)
+
+        await jose.jwtVerify(jwt, JWKS, {
+            issuer,
         })
+
         const scopes = (payload['scope'] as string)?.split(' ')
         return {
             profile: payload,
@@ -64,7 +93,7 @@ export const jwks = (issuer: string) => {
                         }
                         return {
                             error: 'Forbidden',
-                            message: 'Invalid token',
+                            message: 'Token is invalid',
                         }
                     }
 

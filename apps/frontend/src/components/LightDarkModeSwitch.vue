@@ -1,20 +1,42 @@
 <script setup lang="ts">
+import * as log from '@/libs/log';
 import { onMounted } from 'vue';
-
-const mq = window.matchMedia('(prefers-color-scheme: dark)');
-let isDark = mq.matches;
 
 const emit = defineEmits(['init', 'changed'])
 
+function determineTheme() {
+    // const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    // const preferDarkMode = mq.matches;
+
+    const userDarkMode = localStorage.getItem('theme') === 'dark';
+    log.info('userDarkMode=' + userDarkMode)
+    const googleDarkMode = localStorage.getItem('activeDarkGoogle') === 'true';
+    log.info('googleDarkMode=' + googleDarkMode)
+
+    let isDark = userDarkMode || googleDarkMode;
+    return isDark ? 'dark' : 'light';
+}
+
+function updateTheme(newTheme: string) {
+    document.body.dataset.mode = newTheme;
+    emit('changed', newTheme)
+}
 
 function doSwitchMode() {
-    document.body.dataset.mode = isDark ? 'light' : 'dark';
-    isDark = !isDark
-    emit('changed', isDark)
+    log.info('Switching theme')
+    const theme = determineTheme();
+    const switchedTheme = theme === 'dark' ? 'light' : 'dark';
+    log.info('switchedTheme=' + switchedTheme)
+
+    updateTheme(switchedTheme)
+
+    localStorage.setItem('theme', switchedTheme);
 }
 
 onMounted(() => {
-    emit('init', isDark)
+    const theme = determineTheme();
+    emit('init', theme)
+    updateTheme(theme)
 })
 
 </script>

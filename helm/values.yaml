@@ -4,7 +4,7 @@ image:
   repository: mtr.devops.telekom.de/tardis-internal/hyperion/linter-api
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "main"
+  tag: "next"
 
 imagePullSecrets:
   - name: eni-pull-mtr-devops-tardis-internal-secret
@@ -26,10 +26,10 @@ podAnnotations: {}
 podSecurityContext:
   fsGroup: 2000
 
-securityContext: 
+securityContext:
   capabilities:
     drop:
-    - ALL
+      - ALL
   readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 1000
@@ -43,9 +43,9 @@ ingress:
   className: ""
   annotations:
     kubernetes.io/ingress.class: triton-ingress
-    kubernetes.io/tls-acme: 'true'
+    kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/backend-protocol: HTTP
-    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-buffer-size: 64k
   hosts:
     - host: linter--integration.test.dhei.telekom.de
@@ -75,9 +75,11 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
-
 # oidcIssuer: https://stargate-integration.test.dhei.telekom.de/auth/realms/team-default
+# oidcTrustedIssuers: https://stargate.qa.dhei.telekom.de/auth/realms/team-sit,https://stargate.qa.dhei.telekom.de/auth/realms/team-av
 # apiUrl: https://linter--integration.test.dhei.telekom.de
 # editorUrl: https://linter--integration.test.dhei.telekom.de
 # artifactoryUsername: <path:secret/data/hyperion/dev-test-rover_integration/linter-server#ARTIFACTORY_USER>
+artifactoryUsername: myUser
 # artifactoryPassword: <path:secret/data/hyperion/dev-test-rover_integration/linter-server#ARTIFACTORY_PASSWORD>
+artifactoryPassword: secret

@@ -47,6 +47,9 @@ export class Config {
         if (val === undefined && fallback) {
             return this.get(Config.convertKey(key), false)
         }
+        if (val.length === 0) {
+            return undefined
+        }
         if (val.length === 1) {
             return val[0] as T
         }

@@ -4,6 +4,7 @@ import { bundleAndLoadRuleset } from "@stoplight/spectral-ruleset-bundler/with-l
 import * as Rulesets from '@stoplight/spectral-rulesets';
 
 import { Storage } from "@/libs/storage";
+import { determineInputType } from "./format";
 import * as log from "./log";
 
 export interface RuleRef {
@@ -126,12 +127,6 @@ export class Linter {
     }
 }
 
-export function determineInputType(input: string) { // TODO improve this
-    if (input[0] == "{") {
-        return 'json'
-    }
-    return 'yaml'
-}
 
 function determineSeverity(severity: number, code: string | number): ResultItem['severity'] {
     if (code === "unrecognized-format") {

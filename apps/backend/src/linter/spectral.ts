@@ -12,6 +12,7 @@ import {
 import type { IO } from '@stoplight/spectral-ruleset-bundler'
 import { bundleAndLoadRuleset } from '@stoplight/spectral-ruleset-bundler/with-loader'
 import * as Rulesets from '@stoplight/spectral-rulesets'
+import { logger } from '../log'
 import type { LintResult } from './common'
 import { determineInputType, formatResult } from './util'
 export interface RuleRef {
@@ -147,7 +148,7 @@ export class Linter {
 
         const refresh = async () => {
             try {
-                console.log(`Refreshing ruleset ${filename}`)
+                logger.info(`Refreshing ruleset ${filename}`)
                 this.setRuleset(
                     name,
                     await bundleAndLoadRuleset(filename, io),
