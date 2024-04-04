@@ -4,7 +4,7 @@ image:
   repository: mtr.devops.telekom.de/tardis-internal/hyperion/linter-api
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "next"
+  tag: "main"
 
 imagePullSecrets:
   - name: eni-pull-mtr-devops-tardis-internal-secret
