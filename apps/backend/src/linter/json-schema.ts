@@ -2,6 +2,7 @@ import $RefParser from '@apidevtools/json-schema-ref-parser'
 import Ajv from 'ajv'
 import addFormats from 'ajv-formats'
 import { readFileSync } from 'fs'
+import * as YAML from 'yaml'
 import type { LintResult } from '.'
 import { logger } from '../log'
 
@@ -59,7 +60,12 @@ export class JsonSchemaLinter {
         let schema
         if (url.startsWith('file://')) {
             const content = readFileSync(url.replace('file://', ''))
-            schema = JSON.parse(content.toString())
+
+            if (url.endsWith('.yaml') || url.endsWith('.yml')) {
+                schema = YAML.parse(content.toString())
+            } else {
+                schema = JSON.parse(content.toString())
+            }
         } else {
             const res = await fetch(url)
             if (res.status !== 200) {
@@ -72,7 +78,11 @@ export class JsonSchemaLinter {
                 } satisfies SchemaWrapper
             }
 
-            schema = await res.json()
+            if (url.endsWith('.yaml') || url.endsWith('.yml')) {
+                schema = YAML.parse(await res.text())
+            } else {
+                schema = await res.json()
+            }
         }
 
         const bundledSchema = await $RefParser.bundle(schema)
