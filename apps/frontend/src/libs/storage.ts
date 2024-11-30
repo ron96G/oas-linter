@@ -197,8 +197,8 @@ export class LocalStorage extends AbstractStorage {
 }
 
 export class StaticStorage extends AbstractStorage {
-    JSON_SCHEMA_INDEX_PATH = "/schemas/index.json"
-    RULESETS_INDEX_PATH = "/rulesets/index.json"
+    JSON_SCHEMA_INDEX_PATH = "schemas/index.json"
+    RULESETS_INDEX_PATH = "rulesets/index.json"
 
     async loadIndex(): Promise<Storage> {
         try {
@@ -214,6 +214,7 @@ export class StaticStorage extends AbstractStorage {
     }
 
     async loadSchemas() {
+
         const res = await fetch(this.JSON_SCHEMA_INDEX_PATH)
         const all: Array<Promise<Item>> = []
         if (res.status === 200) {
