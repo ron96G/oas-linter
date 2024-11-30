@@ -1,0 +1,12 @@
+FROM oven/bun:latest as frontend-builder
+WORKDIR /app
+COPY apps/frontend/package*.json ./
+RUN bun install
+COPY apps/frontend .
+RUN bun run build
+
+
+FROM nginx:alpine
+
+COPY --from=frontend-builder /app/dist /usr/share/nginx/html
+COPY build/nginx.conf /etc/nginx/conf.d/default.conf

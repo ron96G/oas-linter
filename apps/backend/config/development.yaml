@@ -1,23 +1,13 @@
-oidc:
-  issuer: ${OIDC_ISSUER:http://localhost:8080/realms/dev}
-  trustedIssuers: ${OIDC_TRUSTED_ISSUERS:http://localhost:8080/realms/test}
-  clientId: test-client3
-  clientSecret: uEWMKwEJCddt7KOjVVBnZN8rMhJgpnx0
-  redirectHost: http://localhost:3000
-  postLogoutRedirectUri: http://localhost:3000
+auth:
+  enabled: false
 
 api:
   url: http://localhost:3000
-rulesets:
-  - name: gapi
-    url: https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}@artifactory.devops.telekom.de/artifactory/published-api-linting-rules/spectral/v2/latest/gapi-linter-rules.spectral.yaml
-    refreshInterval: 300
-  - name: basic
-    url: https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}@artifactory.devops.telekom.de/artifactory/published-api-linting-rules/spectral/v2/latest/basis-linter-rules.spectral.yaml
-    refreshInterval: 300
+
+rulesets: []
 
 schemas:
-  - name: openapi:2.0-remote
+  - name: openapi:2.0
     url: https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v2.0/schema.json
   - name: openapi:3.0
     url: https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.yaml

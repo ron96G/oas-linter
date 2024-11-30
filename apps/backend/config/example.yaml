@@ -1,0 +1,28 @@
+auth:
+  issuer: ${OIDC_ISSUER:http://localhost:8080/realms/dev}
+  trustedIssuers: ${OIDC_TRUSTED_ISSUERS:http://localhost:8080/realms/test}
+  clientId: test-client3
+  clientSecret: uEWMKwEJCddt7KOjVVBnZN8rMhJgpnx0
+  redirectHost: http://localhost:3000
+  postLogoutRedirectUri: http://localhost:3000
+
+api:
+  url: http://localhost:3000
+
+rulesets:
+  - name: my-ruleset
+    url: https://${USER}:${PASSWORD}@somewhere.com/linter-rules.spectral.yaml
+    refreshInterval: 300
+
+schemas:
+  - name: openapi:2.0
+    url: file://public/schemas/openapi/2.0/schema.json
+  - name: openapi:3.0
+    url: https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.yaml
+  - name: openapi:3.1
+    url: https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema.yaml
+
+ui:
+  enabled: true
+  url: http://localhost:3000
+  apiBase: http://localhost:3000

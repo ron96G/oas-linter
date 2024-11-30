@@ -1,6 +1,8 @@
 import * as fs from 'fs'
 import jp from 'jsonpath'
 import * as YAML from 'yaml'
+import { logger } from '../log'
+
 
 export class Config {
     private readonly config: Record<string, any> = {}
@@ -8,6 +10,7 @@ export class Config {
     constructor() {
         const nodeEnv = process.env.NODE_ENV || 'development'
         this.set('NODE_ENV', nodeEnv)
+        logger.info(`Loading config for ${nodeEnv}`)
 
         this.fromEnv()
         this.fromYaml(`config/${nodeEnv}.yaml`)

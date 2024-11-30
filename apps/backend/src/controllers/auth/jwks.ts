@@ -7,8 +7,14 @@ type JwksFunction = (
     token?: jose.FlattenedJWSInput
 ) => Promise<jose.KeyLike>
 
+var enabled = true
 const trustedIssuers: string[] = []
 const jwksMap = new Map<string, JwksFunction>()
+
+export const disableAuth = () => {
+    logger.warn('Disabling auth')
+    enabled = false
+}
 
 export const addTrustedIssuer = (issuer: string) => {
     issuer = issuer.trim()
@@ -55,7 +61,7 @@ export const jwks = () => {
                 auth: {
                     authenticated: false,
                     profile: {
-                        clientId: 'system',
+                        clientId: 'anonymous',
                     } as jose.JWTPayload & { clientId: string },
                     scopes: [] as string[],
                 },
@@ -65,6 +71,10 @@ export const jwks = () => {
         .derive(({ auth, headers, set }) => {
             return {
                 authenticate: async () => {
+                    if (!enabled) {
+                        return null
+                    }
+
                     const jwt = headers['authorization']?.split(' ')[1]
 
                     if (jwt === undefined) {

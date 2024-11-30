@@ -3,17 +3,18 @@
     "license": "Apache-2.0",
     "module": "index.ts",
     "type": "module",
-    "devDependencies": {
-        "@types/bun": "latest",
-        "@types/jsonpath": "latest",
-        "prettier": "latest"
-    },
-    "peerDependencies": {
-        "typescript": "^5.0.0"
+    "scripts": {
+        "dev": "bun --watch src/index.ts",
+        "build": "bun build src/index.ts",
+        "start": "NODE_ENV=production bun src/index.ts",
+        "test": "bun test",
+        "format": "prettier --write .",
+        "docker:build": "docker build -t linter-api . -f build/Dockerfile",
+        "helm:install": "helm install linter ./helm --namespace=default",
+        "helm:upgrade": "helm upgrade linter ./helm --namespace=default"
     },
     "dependencies": {
         "@apidevtools/json-schema-ref-parser": "^11.5.4",
-        "@elysiajs/cookie": "^0.8.0",
         "@elysiajs/cors": "^0.8.0",
         "@elysiajs/static": "^0.8.1",
         "@elysiajs/swagger": "^0.8.5",
@@ -29,14 +30,12 @@
         "pino": "^8.19.0",
         "yaml": "^2.4.1"
     },
-    "scripts": {
-        "dev": "bun --watch src/index.ts",
-        "build": "bun build src/index.ts",
-        "start": "NODE_ENV=production bun src/index.ts",
-        "test": "bun test",
-        "format": "prettier --write .",
-        "docker:build": "docker build -t linter-api . -f build/Dockerfile",
-        "helm:install": "helm install linter ./helm --namespace=default",
-        "helm:upgrade": "helm upgrade linter ./helm --namespace=default"
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@types/jsonpath": "latest",
+        "prettier": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5.0.0"
     }
 }

@@ -13,33 +13,37 @@ import cors from '@elysiajs/cors'
 import { existsSync } from 'fs'
 import { logger } from '../log'
 import { Ruleset } from '../models/ruleset'
-import { addTrustedIssuer, jwks } from './auth'
+import { addTrustedIssuer, disableAuth, jwks } from './auth'
 import { etag } from './cache/etag'
 import { logger as logMw } from './logger'
 
 const ALLOWED_CONTENT_TYPES = ['application/json', 'application/yaml']
 
 export function setup() {
-    // downward compatibility
-    const issuer = config.get<string>('oidc.issuer')
-    if (issuer) {
-        addTrustedIssuer(issuer)
-    }
+    if (!(config.get<boolean>('auth.enabled') ?? true)) {
+        disableAuth()
 
-    for (const issuer of config
-        .get<string>('oidc.trustedIssuers')
-        ?.split(',') ?? []) {
-        addTrustedIssuer(issuer)
+    } else {
+        // downward compatibility
+        const issuer = config.get<string>('auth.issuer')
+        if (issuer) {
+            addTrustedIssuer(issuer)
+        }
+        for (const issuer of config
+            .get<string>('auth.trustedIssuers')
+            ?.split(',') ?? []) {
+            addTrustedIssuer(issuer)
+        }
     }
     const jwksPlugin = jwks()
 
     // Not used for now
     // const oidcPlugin = oidc({
-    //     clientId: config.get<string>('oidc.clientId')!,
-    //     clientSecret: config.get<string>('oidc.clientSecret')!,
-    //     realmUrl: config.get<string>('oidc.issuer')!,
-    //     cookieSecrets: [config.get<string>('oidc.cookieSecret')!],
-    //     redirectHost: config.get<string>('oidc.redirectHost')!,
+    //     clientId: config.get<string>('auth.clientId')!,
+    //     clientSecret: config.get<string>('auth.clientSecret')!,
+    //     realmUrl: config.get<string>('auth.issuer')!,
+    //     cookieSecrets: [config.get<string>('auth.cookieSecret')!],
+    //     redirectHost: config.get<string>('auth.redirectHost')!,
     //     defaultRedirectPath: '/',
     // })
 
@@ -57,45 +61,9 @@ export function setup() {
     })
 
     app.use(
-        logMw({
-            level: config.get<string>('log.level') ?? 'info',
-            ignoredPaths: [/\/q\/.*/],
-        })
-    )
-
-    app.use(
-        cors({
-            origin: /.*/,
-            methods: ['GET', 'HEAD', 'OPTIONS'],
-            preflight: true,
-            credentials: false,
-        })
-    )
-
-    app.onError(({ code, error, request }) => {
-        logger.warn({
-            method: request.method,
-            url: request.url,
-            status: code,
-            error,
-        })
-        return { code, error: error.message }
-    })
-
-    if (config.get<boolean>('ui.enabled') && existsSync('public')) {
-        app.use(
-            staticPlugin({
-                indexHTML: true,
-                prefix: '/',
-            })
-        )
-    }
-
-    app.use(
         swagger({
-            provider: 'swagger-ui',
+            provider: 'scalar',
             autoDarkMode: true,
-            path: '/docs',
             swaggerOptions: {
                 deepLinking: true,
                 displayOperationId: true,
@@ -158,6 +126,41 @@ export function setup() {
             },
         })
     )
+
+    app.use(
+        logMw({
+            level: config.get<string>('log.level') ?? 'info',
+            ignoredPaths: [/\/q\/.*/],
+        })
+    )
+
+    app.use(
+        cors({
+            origin: /.*/,
+            methods: ['GET', 'HEAD', 'OPTIONS'],
+            preflight: true,
+            credentials: false,
+        })
+    )
+
+    app.onError(({ code, error, request }) => {
+        logger.warn({
+            method: request.method,
+            url: request.url,
+            status: code,
+            error,
+        })
+        return { code, error: error.message }
+    })
+
+    if (config.get<boolean>('ui.enabled') && existsSync('public')) {
+        app.use(
+            staticPlugin({
+                indexHTML: true,
+                prefix: '/',
+            })
+        )
+    }
 
     // scan routes
     const scanCtl = new ScanControllerImpl()

@@ -11,32 +11,33 @@
     "test": "echo \"Error: no test specified\""
   },
   "dependencies": {
-    "@stoplight/spectral-core": "^1.18.3",
-    "@stoplight/spectral-parsers": "^1.0.3",
-    "@stoplight/spectral-ruleset-bundler": "^1.5.2",
-    "@stoplight/spectral-rulesets": "^1.18.1",
-    "@telekom/scale-components": "^3.0.0-beta.150",
+    "@stoplight/spectral-core": "^1.19.4",
+    "@stoplight/spectral-parsers": "^1.0.5",
+    "@stoplight/spectral-ruleset-bundler": "^1.6.1",
+    "@stoplight/spectral-rulesets": "^1.21.3",
+    "@telekom/scale-components": "^3.0.0-beta.155",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
-    "monaco-editor": "^0.47.0",
-    "monaco-yaml": "^5.1.1",
-    "vue": "^3.3.4",
+    "monaco-editor": "^0.52.0",
+    "monaco-yaml": "^5.2.3",
+    "vue": "^3.5.13",
     "vue-resizer": "^1.1.9"
   },
   "devDependencies": {
-    "@tsconfig/node18": "^18.2.2",
+    "@apidevtools/json-schema-ref-parser": "^11.7.2",
+    "@tsconfig/node18": "^18.2.4",
     "@types/js-yaml": "^4.0.9",
-    "@types/lodash": "^4.17.0",
-    "@types/node": "^20.11.25",
+    "@types/lodash": "^4.17.13",
+    "@types/node": "^20.17.9",
     "@types/swagger-ui": "^3.52.4",
-    "@vitejs/plugin-vue": "^5.0.4",
+    "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.5.1",
     "monaco-editor-webpack-plugin": "^7.1.0",
     "npm-run-all": "^4.1.5",
     "resize-observer-polyfill": "^1.5.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.2",
-    "vite": "^5.1.5",
-    "vue-tsc": "^2.0.6"
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vue-tsc": "^2.1.10"
   }
 }

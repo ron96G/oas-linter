@@ -4,7 +4,9 @@
   "dependencies": {},
   "devDependencies": {},
   "scripts": {
-    "docker:build": "docker build -t linter-api . -f build/Dockerfile.all-in-one"
+    "docker:build:all": "docker build -t oas-linter-server:latest-all . -f build/Dockerfile.all-in-one",
+    "docker:build:ui": "docker build -t oas-linter-ui:latest . -f build/Dockerfile.ui",
+    "docker:build:server": "docker build -t oas-linter-server:latest . -f build/Dockerfile"
   },
   "license": "Apache-2.0"
 }
