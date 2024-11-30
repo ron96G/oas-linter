@@ -269,7 +269,7 @@ export class StaticStorage extends AbstractStorage {
         if (ref.href) {
             const res = await fetch(ref.href)
             if (res.status === 200) {
-                if (res.headers.get("content-type") === "application/json") {
+                if (res.headers.get("content-type")?.startsWith("application/json")) {
                     return {
                         name: ref.name,
                         value: await res.text(),
