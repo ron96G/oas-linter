@@ -15,7 +15,7 @@ const items = computed(() => {
             {
                 src: `github-mark-${props.theme}.png`,
                 alt: 'Github',
-                href: 'https://github.com/ron96G/dev-tools'
+                href: 'https://github.com/ron96G/oas-linter'
             }
         ]
     }
