@@ -107,6 +107,9 @@ onMounted(async () => {
             }
         }
     }
+
+    const showSwaggerUIValue = getFromQuery("showSwaggerUI", "false", false)
+    showSwaggerUI.value = showSwaggerUIValue === "true"
 })
 
 async function onInit(editor: any) {
@@ -198,6 +201,7 @@ async function doShowSwaggerUI() {
     log.info('Toggling Swagger UI')
     input.value = valueTracker.value
     showSwaggerUI.value = !showSwaggerUI.value
+    setInQuery("showSwaggerUI", showSwaggerUI.value ? "true" : "false")
 
     await onChange(valueTracker.value)
 }
@@ -233,7 +237,7 @@ async function doShowSwaggerUI() {
                 <scale-button class="controls-item" @click="doFormatInput"> Format</scale-button>
                 <scale-button class="controls-item" @click="doConvertInput"> Convert<br>(json/yaml)</scale-button>
                 <scale-button class="controls-item" @click="doResetAll"> Reset</scale-button>
-                <scale-switch label="Show Swagger UI" @change="doShowSwaggerUI"
+                <scale-switch label="Show Swagger UI" :checked="showSwaggerUI" @change="doShowSwaggerUI"
                     style="margin: auto 0 auto 0;"></scale-switch>
             </div>
             <div v-if="!showSwaggerUI">

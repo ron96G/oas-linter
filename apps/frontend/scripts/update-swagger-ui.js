@@ -8,6 +8,8 @@ const NEEDED_FILES = [
     "swagger-ui-es-bundle.js.map",
     "swagger-ui-standalone-preset.js",
     "swagger-ui-standalone-preset.js.map",
+    "swagger-ui.css",
+    "swagger-ui.css.map",
 ]
 const DEST_DIR = "src/assets/swagger-ui/"
 
