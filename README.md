@@ -78,6 +78,13 @@ The frontend is a standalone application that can be used without the backend. I
 
 You may use the [scripts](#scripts) to update the frontend assets.
 
+The following query-parameters are supported:
+
+- `ruleset`: The name of the ruleset to use. If not set, the default ruleset will be used.
+- `schema`: The name of the schema to use. If not set, the default schema will be used.
+- `input`: The URL of the OAS to load, display and lint. **Requires CORS support.**
+- `showSwaggerUI`: If set, the swagger-ui will be displayed.
+
 ### Installation
 
 To install the frontend, run the following commands:
