@@ -1,5 +1,7 @@
 # OAS Linter
 
+[Example](https://ron96g.github.io/oas-linter/?ruleset=default&schema=openapi.v3.0&input=https://petstore3.swagger.io/api/v3/openapi.json)
+
 ## Description
 
 This project is a linter for OpenAPI Specification (OAS) files. It will check the OAS for errors and provide feedback on how to fix them.
