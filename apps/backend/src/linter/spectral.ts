@@ -69,11 +69,7 @@ export class Linter {
         if (!this.rulesets.has(name)) {
             throw Error(`No ruleset called '${name}' exists.`)
         }
-        const ruleset = this.rulesets.get(name)!
-        if (!ruleset.ok) {
-            throw Error(ruleset.error)
-        }
-        return ruleset
+        return this.rulesets.get(name)!
     }
 
     private setRuleset(
@@ -126,7 +122,7 @@ export class Linter {
 
             if (res.status !== 200) {
                 rawBody = await res.text()
-                throw new Error(`Failed to fetch ${uri}: ${res.status}`)
+                throw new Error(`Failed to fetch ${finalUri}: ${res.status}`)
             } else {
                 rawBody = await res.text()
                 return rawBody
